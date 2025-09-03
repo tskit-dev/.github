@@ -1,0 +1,61 @@
+name: Documentation Build Template
+
+on:
+  workflow_call:
+    inputs:
+      requirements-path:
+        description: 'Path to documentation requirements file'
+        required: false
+        type: string
+        default: 'requirements/CI-docs/requirements.txt'
+      additional-setup:
+        description: 'Additional setup commands to run'
+        required: false
+        type: string
+        default: ''
+      make-command:
+        description: 'Make command for C modules'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build-deploy-docs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v4.2.2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5.4.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ${{ inputs.requirements-path }}
+
+      - name: Install documentation dependencies
+        run: pip install -r ${{ inputs.requirements-path }}
+
+      - name: Additional setup
+        if: inputs.additional-setup != ''
+        run: ${{ inputs.additional-setup }}
+
+      - name: Build C modules
+        if: inputs.make-command != ''
+        run: ${{ inputs.make-command }}
+
+      - name: Build documentation
+        run: cd docs && make
+
+      - name: Trigger tskit-site rebuild
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST https://api.github.com/repos/tskit-dev/tskit-site/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u AdminBot-tskit:${{ secrets.ADMINBOT_TOKEN }} \
+          --data '{"event_type":"build-docs"}'
