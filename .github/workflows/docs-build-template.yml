@@ -20,7 +20,7 @@ on:
         default: ''
 
 jobs:
-  build-deploy-docs:
+  Docs:
     runs-on: ubuntu-24.04
     steps:
       - uses: styfle/cancel-workflow-action@0.12.1
