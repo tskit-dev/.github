@@ -13,11 +13,19 @@ on:
         required: false
         type: string
         default: ''
+      python_version:
+        description: 'Python version to use'
+        required: true
+        type: string
+      os:
+        description: 'Operating system to run on'
+        required: true
+        type: string
 
 jobs:
   test:
     name: Python
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ inputs.os }}
     defaults:
       run:
         shell: bash
@@ -44,7 +52,7 @@ jobs:
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ inputs.python_version }}
           version: "0.8.15"
       
       - name: Install dependencies
