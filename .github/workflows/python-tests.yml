@@ -1,0 +1,79 @@
+name: Reusable Python Tests
+
+on:
+  workflow_call:
+    inputs:
+      additional_commands:
+        description: 'Additional commands to run after installing dependencies'
+        required: false
+        type: string
+        default: ''
+      make_command:
+        description: 'Make/build command to run'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  test:
+    name: Python
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          submodules: true
+
+      - name: Determine working directory
+        id: workdir
+        run: |
+          if [ -d "python" ]; then
+            echo "dir=python" >> $GITHUB_OUTPUT
+          else
+            echo "dir=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          version: "0.8.15"
+      
+      - name: Install dependencies
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: |
+          uv venv
+          uv pip install -r pyproject.toml --extra test
+
+      - name: Additional commands
+        if: ${{ inputs.additional_commands != '' }}
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: ${{ inputs.additional_commands }}
+
+      - name: Make/build
+        if: ${{ inputs.make_command != '' }}
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: ${{ inputs.make_command }}
+
+      - name: Run tests
+        working-directory: ${{ steps.workdir.outputs.dir }}
+        run: |
+          uv run --no-sync python -m pytest -xv --cov --cov-report=xml --cov-branch
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5.4.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: ${{ steps.workdir.outputs.dir }}
+          fail_ci_if_error: false
+          flags: python-tests
+          name: codecov-umbrella
+          verbose: true
