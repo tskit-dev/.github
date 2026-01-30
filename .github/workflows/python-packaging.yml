@@ -29,6 +29,8 @@ jobs:
           access_token: ${{ github.token }}
 
       - uses: actions/checkout@v4.2.2
+        with:
+          submodules: true
 
       - name: Install additional APT packages
         if: ${{ inputs.additional-apt-packages != '' }}
@@ -43,10 +45,13 @@ jobs:
           pip install uv
           uv pip install --system build twine validate-pyproject[all]
 
-      - name: Check package
-        # working-directory: ${{ inputs.working-directory }}
+      - name: Validate pyproject
+        working-directory: ${{ inputs.working-directory }}
+        run: validate-pyproject pyproject.toml
+
+      - name: Twine check
+        working-directory: ${{ inputs.working-directory }}
         run: |
-          validate-pyproject pyproject.toml
           python -m build
           python -m twine check --strict dist/*
 
