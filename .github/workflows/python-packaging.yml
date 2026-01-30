@@ -44,7 +44,7 @@ jobs:
           uv pip install --system build twine validate-pyproject[all]
 
       - name: Check package
-        working-directory: ${{ inputs.working-directory }}
+        # working-directory: ${{ inputs.working-directory }}
         run: |
           validate-pyproject pyproject.toml
           python -m build
