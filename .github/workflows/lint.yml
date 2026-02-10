@@ -12,21 +12,21 @@ jobs:
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ github.token }}
-      
+
       - uses: actions/checkout@v4.2.2
-      
+
       - uses: actions/setup-python@v5.4.0
         with:
           python-version: '3.12'
-      
+
       - name: Install clang-format (if needed)
         run: |
           if grep -q "clang" .pre-commit-config.yaml 2>/dev/null; then
             echo "Installing clang-format..."
-            pip install --upgrade setuptools
-            pip install clang-format==6.0.1
+            # Version chosen arbitrarily as newest on 2026-02-10
+            pip install clang-format==21.1.8
           else
             echo "No clang-format needed"
           fi
-      
+
       - uses: pre-commit/action@v3.0.1
