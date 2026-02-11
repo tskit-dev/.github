@@ -2,6 +2,12 @@ name: Reusable Lint Workflow
 
 on:
   workflow_call:
+    inputs:
+      clang-format-version:
+        description: 'Version of clang-format to use'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   pre-commit:
@@ -20,13 +26,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install clang-format (if needed)
-        run: |
-          if grep -q "clang" .pre-commit-config.yaml 2>/dev/null; then
-            echo "Installing clang-format..."
-            # Version chosen arbitrarily as newest on 2026-02-10
-            pip install clang-format==21.1.8
-          else
-            echo "No clang-format needed"
-          fi
-
+        if: ${{ inputs.clang-format-version != '' }}
+        run: pip install clang-format==${{ inputs.clang-format-version }}
+  
       - uses: pre-commit/action@v3.0.1
