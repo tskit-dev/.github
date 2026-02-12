@@ -3,16 +3,6 @@ name: Documentation Build Template
 on:
   workflow_call:
     inputs:
-      additional-setup:
-        description: 'Additional setup commands to run'
-        required: false
-        type: string
-        default: ''
-      make-command:
-        description: 'Make command for C modules'
-        required: false
-        type: string
-        default: ''
       pyproject-directory:
         description: 'Directory to find pyproject.toml'
         required: false
@@ -42,19 +32,10 @@ jobs:
           version: "0.8.15"
       
       - name: Install doc deps
-        working-directory: ${{ inputs.pyproject-directory }}
-        run: uv sync --locked --group docs
-
-      - name: Additional setup
-        if: inputs.additional-setup != ''
-        run: ${{ inputs.additional-setup }}
-
-      - name: Build C modules
-        if: inputs.make-command != ''
-        run: ${{ inputs.make-command }}
-
+        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group docs
+        
       - name: Build documentation
-        run: cd docs && make
+        run: uv run --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
 
       - name: Trigger tskit-site rebuild
         if: github.ref == 'refs/heads/main'
