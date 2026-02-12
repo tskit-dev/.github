@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: ''
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
+        required: false
+        type: string
+        default: '.'
 
 jobs:
   Docs:
@@ -37,16 +42,8 @@ jobs:
           version: "0.8.15"
       
       - name: Install doc deps
-        run: | 
-          
-          if [ -f pyproject.toml ]; then
-            uv pip install --system -r pyproject.toml --extra docs
-          elif [ -f python/pyproject.toml ]; then
-            uv pip install --system -r python/pyproject.toml --extra docs
-          else
-            echo "No pyproject.toml found in root or python/ directory"
-            exit 1
-          fi
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: uv sync --locked --group docs
 
       - name: Additional setup
         if: inputs.additional-setup != ''
