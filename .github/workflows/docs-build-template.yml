@@ -53,7 +53,7 @@ jobs:
               data = tomllib.loads((project_dir / "pyproject.toml").read_text())
               name = data["project"]["name"]
               print(m.version(name))
-              PY
+              'PY'
               )"
           echo "PKG_VERSION=$PKG_VERSION"
           sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
