@@ -3,16 +3,11 @@ name: Documentation Build Template
 on:
   workflow_call:
     inputs:
-      additional-setup:
-        description: 'Additional setup commands to run'
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
         required: false
         type: string
-        default: ''
-      make-command:
-        description: 'Make command for C modules'
-        required: false
-        type: string
-        default: ''
+        default: '.'
 
 jobs:
   Docs:
@@ -37,27 +32,10 @@ jobs:
           version: "0.8.15"
       
       - name: Install doc deps
-        run: | 
-          
-          if [ -f pyproject.toml ]; then
-            uv pip install --system -r pyproject.toml --extra docs
-          elif [ -f python/pyproject.toml ]; then
-            uv pip install --system -r python/pyproject.toml --extra docs
-          else
-            echo "No pyproject.toml found in root or python/ directory"
-            exit 1
-          fi
-
-      - name: Additional setup
-        if: inputs.additional-setup != ''
-        run: ${{ inputs.additional-setup }}
-
-      - name: Build C modules
-        if: inputs.make-command != ''
-        run: ${{ inputs.make-command }}
-
+        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group docs
+        
       - name: Build documentation
-        run: cd docs && make
+        run: uv run --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
 
       - name: Trigger tskit-site rebuild
         if: github.ref == 'refs/heads/main'
