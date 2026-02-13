@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PROJECT_DIR="${{ inputs.pyproject-directory }}"
+          export PROJECT_DIR="${{ inputs.pyproject-directory }}"
           PKG_VERSION="$(
           uv run --project "$PROJECT_DIR" python - <<PY
           import os
