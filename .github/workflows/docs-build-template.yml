@@ -43,17 +43,18 @@ jobs:
           set -euo pipefail
           PROJECT_DIR="${{ inputs.pyproject-directory }}"
           PKG_VERSION="$(
-          uv run --project "$PROJECT_DIR" python - <<'PY'
-          import tomllib
-          import importlib.metadata as m
-          from pathlib import Path
+          uv run --project "$PROJECT_DIR" python - <<PY
           import os
+          import tomllib
+          import pathlib
+          import importlib.metadata as m
 
-          project_dir = Path(os.environ["PROJECT_DIR"])
-          data = tomllib.loads((project_dir / "pyproject.toml").read_text())
-          name = data["project"]["name"]
+          project_dir = pathlib.Path(os.environ['PROJECT_DIR'])
+          data = tomllib.loads((project_dir / 'pyproject.toml').read_text())
+          name = data['project']['name']
           print(m.version(name))
-          'PY')"
+          PY
+          )"
           echo "PKG_VERSION=$PKG_VERSION"
           sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
 
