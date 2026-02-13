@@ -1,4 +1,11 @@
-name: Documentation Build Template
+# Requires
+# - pyproject.toml with a group called "docs"
+# - docs directory in the project root
+# - A __PKG_VERSION__ string in the JupyterBook _config.yml which
+#   is used to replace the with the package version derived from the
+#   python package defined in the pyproject.toml
+#
+name: Documentation workflow for tskit-dev
 
 on:
   workflow_call:
@@ -27,6 +34,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install doxygen
+        # We don't need this for every repo so could make it optional
         run: sudo apt-get update && sudo apt-get install -y doxygen
 
       - name: Install uv
@@ -37,6 +45,10 @@ jobs:
       - name: Install doc deps
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group docs
 
+      # This is complicated. We run an embedded python script using uv which
+      # reads the project name from pyproject.toml, and then uses python's
+      # importlib to determine the version number. This should be robust to
+      # version numbers being set in a number of ways.
       - name: Set build version
         shell: bash
         run: |
