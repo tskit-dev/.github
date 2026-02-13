@@ -22,6 +22,12 @@ on:
         type: string
         default: ''
 
+      additional-apt-packages:
+        description: 'Additional APT packages to install'
+        required: false
+        type: string
+        default: ''
+
 jobs:
   Docs:
     runs-on: ubuntu-24.04
@@ -39,6 +45,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      # We could combine this with the doxygen command below, but in practise
+      # they are used mutually exclusively so there's nothing to be gained
+      # in making one apt install.
+      - name: Install additional APT packages
+        if: ${{ inputs.additional-apt-packages != '' }}
+        run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
