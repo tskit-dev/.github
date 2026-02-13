@@ -16,6 +16,12 @@ on:
         type: string
         default: '.'
 
+      doxygen-directory:
+        description: 'Directory to run doxygen from'
+        required: false
+        type: string
+        default: ''
+
 jobs:
   Docs:
     runs-on: ubuntu-24.04
@@ -33,9 +39,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install doxygen
-        # We don't need this for every repo so could make it optional
-        run: sudo apt-get update && sudo apt-get install -y doxygen
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -69,6 +72,16 @@ jobs:
           )"
           echo "PKG_VERSION=$PKG_VERSION"
           sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
+
+      # Tskit has C code that we document using doxygen. This needs to be done
+      # before the jupyterbook build which incorporates it.
+      - name: Install doxygen (if required)
+        if: ${{ inputs.doxygen-directory != '' }}
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      - name: Run doxygen (if required)
+        if: ${{ inputs.doxygen-directory != '' }}
+        run: cd ${{ inputs.doxygen-directory }} && doxygen
 
       - name: Build documentation
         run: uv run --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
