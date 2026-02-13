@@ -33,7 +33,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.15"
-      
+
       - name: Install doc deps
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group docs
 
@@ -43,21 +43,20 @@ jobs:
           set -euo pipefail
           PROJECT_DIR="${{ inputs.pyproject-directory }}"
           PKG_VERSION="$(
-            uv run --project "$PROJECT_DIR" python - <<'PY'
-              import tomllib
-              import importlib.metadata as m
-              from pathlib import Path
-              import os
+          uv run --project "$PROJECT_DIR" python - <<'PY'
+          import tomllib
+          import importlib.metadata as m
+          from pathlib import Path
+          import os
 
-              project_dir = Path(os.environ["PROJECT_DIR"])
-              data = tomllib.loads((project_dir / "pyproject.toml").read_text())
-              name = data["project"]["name"]
-              print(m.version(name))
-              'PY'
-              )"
+          project_dir = Path(os.environ["PROJECT_DIR"])
+          data = tomllib.loads((project_dir / "pyproject.toml").read_text())
+          name = data["project"]["name"]
+          print(m.version(name))
+          'PY')"
           echo "PKG_VERSION=$PKG_VERSION"
           sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
-  
+
       - name: Build documentation
         run: uv run --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
 
