@@ -1,0 +1,82 @@
+# Requires
+# - pyproject.toml with a group called "docs"
+# - docs directory in the project root
+# - A __PKG_VERSION__ string in the JupyterBook _config.yml which
+#   is used to replace the with the package version derived from the
+#   python package defined in the pyproject.toml
+#
+name: Documentation workflow for tskit-dev
+
+on:
+  workflow_call:
+    inputs:
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
+        required: false
+        type: string
+        default: '.'
+
+jobs:
+  Docs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v4.2.2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5.4.0
+        with:
+          python-version: '3.11'
+
+      - name: Install doxygen
+        # We don't need this for every repo so could make it optional
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.15"
+
+      - name: Install doc deps
+        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group docs
+
+      # This is complicated. We run an embedded python script using uv which
+      # reads the project name from pyproject.toml, and then uses python's
+      # importlib to determine the version number. This should be robust to
+      # version numbers being set in a number of ways.
+      - name: Set build version
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PROJECT_DIR="${{ inputs.pyproject-directory }}"
+          PKG_VERSION="$(
+          uv run --project "$PROJECT_DIR" python - <<PY
+          import os
+          import tomllib
+          import pathlib
+          import importlib.metadata as m
+
+          project_dir = pathlib.Path(os.environ['PROJECT_DIR'])
+          data = tomllib.loads((project_dir / 'pyproject.toml').read_text())
+          name = data['project']['name']
+          print(m.version(name))
+          PY
+          )"
+          echo "PKG_VERSION=$PKG_VERSION"
+          sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
+
+      - name: Build documentation
+        run: uv run --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
+
+      - name: Trigger tskit-site rebuild
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST https://api.github.com/repos/tskit-dev/tskit-site/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u AdminBot-tskit:${{ secrets.ADMINBOT_TOKEN }} \
+          --data '{"event_type":"build-docs"}'

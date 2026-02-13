@@ -1,13 +1,20 @@
+# DEPRECATED - repos using this should move to the docs.yml
+# workflow
 name: Documentation Build Template
 
 on:
   workflow_call:
     inputs:
-      pyproject-directory:
-        description: 'Directory to find pyproject.toml'
+      additional-setup:
+        description: 'Additional setup commands to run'
         required: false
         type: string
-        default: '.'
+        default: ''
+      make-command:
+        description: 'Make command for C modules'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   Docs:
@@ -26,40 +33,33 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install doxygen
-        run: sudo apt-get update && sudo apt-get install -y doxygen
-
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.15"
 
       - name: Install doc deps
-        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group docs
-
-      - name: Set build version
-        shell: bash
         run: |
-          set -euo pipefail
-          export PROJECT_DIR="${{ inputs.pyproject-directory }}"
-          PKG_VERSION="$(
-          uv run --project "$PROJECT_DIR" python - <<PY
-          import os
-          import tomllib
-          import pathlib
-          import importlib.metadata as m
 
-          project_dir = pathlib.Path(os.environ['PROJECT_DIR'])
-          data = tomllib.loads((project_dir / 'pyproject.toml').read_text())
-          name = data['project']['name']
-          print(m.version(name))
-          PY
-          )"
-          echo "PKG_VERSION=$PKG_VERSION"
-          sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
+          if [ -f pyproject.toml ]; then
+            uv pip install --system -r pyproject.toml --extra docs
+          elif [ -f python/pyproject.toml ]; then
+            uv pip install --system -r python/pyproject.toml --extra docs
+          else
+            echo "No pyproject.toml found in root or python/ directory"
+            exit 1
+          fi
+
+      - name: Additional setup
+        if: inputs.additional-setup != ''
+        run: ${{ inputs.additional-setup }}
+
+      - name: Build C modules
+        if: inputs.make-command != ''
+        run: ${{ inputs.make-command }}
 
       - name: Build documentation
-        run: uv run --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
+        run: cd docs && make
 
       - name: Trigger tskit-site rebuild
         if: github.ref == 'refs/heads/main'
