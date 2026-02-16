@@ -26,8 +26,10 @@ jobs:
           submodules: true
 
       - name: Install dev tools
-        run: sudo apt-get update && sudo apt-get install -y \
-          gcovr ${{ inputs.additional-apt-packages }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcovr ${{ inputs.additional-apt-packages }}
 
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
