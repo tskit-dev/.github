@@ -36,19 +36,19 @@ jobs:
             ninja-build valgrind clang meson gcovr ${{ inputs.additional-apt-packages }}
 
       - name: Configure code
-        working-directory: {{ inputs.library-directory }}
+        working-directory: ${{ inputs.library-directory }}
         run: meson setup build-cov -Db_coverage=true
 
       - name: Compile
-        working-directory: {{ inputs.library-directory }}
+        working-directory: ${{ inputs.library-directory }}
         run: ninja -C build-cov
 
       - name: Run tests
-        working-directory: {{ inputs.library-directory }}
+        working-directory: ${{ inputs.library-directory }}
         run: ninja -C build-cov test
 
       - name: Build coverage report
-        working-directory: {{ inputs.library-directory }}
+        working-directory: ${{ inputs.library-directory }}
         run: ninja -C build-cov coverage-xml
 
       - name: Upload coverage to Codecov
@@ -56,18 +56,18 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: C
-          directory: {{ inputs.library-directory }}
+          directory: ${{ inputs.library-directory }}
           gcov_args: --preserve-paths
           fail_ci_if_error: true
 
       - name: Compile and test with clang
-        working-directory: {{ inputs.library-directory }}
+        working-directory: ${{ inputs.library-directory }}
         run: |
           CC=clang meson setup build-clang
           meson test -C build-clang
 
       - name: Run tests with valgrind
-        working-directory: {{ inputs.library-directory }}
+        working-directory: ${{ inputs.library-directory }}
         run: |
           meson setup build-valgrind
           meson test -C build-valgrind -t-1 \
