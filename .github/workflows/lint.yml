@@ -1,16 +1,10 @@
-name: Reusable Lint Workflow
-
-on:
-  workflow_call:
-    inputs:
-      clang-format-version:
-        description: 'Version of clang-format to use'
-        required: false
-        type: string
-        default: ''
+# Requires
+# - pyproject.toml with a group called "lint" which must include prek
+# - A prek.toml file
+name: Lint workflow for tskit-dev
 
 jobs:
-  pre-commit:
+  prek:
     name: Lint
     runs-on: ubuntu-24.04
     steps:
@@ -21,12 +15,14 @@ jobs:
 
       - uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-python@v5.4.0
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.12'
+          python-version: 3.11
+          version: "0.8.15"
 
-      - name: Install clang-format (if needed)
-        if: ${{ inputs.clang-format-version != '' }}
-        run: pip install clang-format==${{ inputs.clang-format-version }}
-  
-      - uses: pre-commit/action@v3.0.1
+      - name: Install Python dependencies
+        run: uv sync --locked --only-group lint
+
+      - name: Run prek
+        run: uv run --only-group lint prek -c prek.toml run --all-files
