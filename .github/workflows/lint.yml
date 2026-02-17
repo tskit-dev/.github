@@ -3,6 +3,9 @@
 # - A prek.toml file
 name: Lint workflow for tskit-dev
 
+on:
+  workflow_call:
+
 jobs:
   prek:
     name: Lint
