@@ -28,4 +28,4 @@ jobs:
         run: uv sync --locked --only-group lint
 
       - name: Run prek
-        run: uv run --only-group lint prek -c prek.toml run --all-files
+        run: uv run --only-group lint prek -c prek.toml run --all-files --show-diff-on-failure
