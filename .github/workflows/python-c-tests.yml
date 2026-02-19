@@ -38,13 +38,13 @@ jobs:
           version: "0.8.15"
 
       - name: Install Python dependencies
-        run: uv sync --locked --group test
+        run: uv sync --locked --group python-c-test --no-default-groups
 
       - name: Build module
-        run: CFLAGS=--coverage uv run python setup.py build_ext --inplace
+        run: CFLAGS=--coverage uv run python --no-default-groups setup.py build_ext --inplace
 
       - name: Run low-level tests
-        run: uv run pytest -vs -n0 tests/test_lowlevel.py
+        run: uv run pytest --no-default-groups tests/test_lowlevel.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
