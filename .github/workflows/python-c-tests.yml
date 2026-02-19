@@ -38,7 +38,7 @@ jobs:
           version: "0.8.15"
 
       - name: Install Python dependencies
-        run: uv sync --locked --group python-c-test --no-default-groups
+        run: uv sync --locked --group test --no-default-groups
 
       - name: Build module
         run: CFLAGS=--coverage uv run --no-default-groups python setup.py build_ext --inplace
