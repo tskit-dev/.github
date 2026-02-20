@@ -32,4 +32,4 @@ jobs:
       - name: Run prek
         run: |
           uv run --locked --only-group lint \
-          prek -c prek.toml run --all-files --show-diff-on-failure -vvv
+          prek -c prek.toml run --all-files --show-diff-on-failure
