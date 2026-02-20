@@ -26,7 +26,10 @@ jobs:
           python-version: 3.11
           version: "0.10.2"
 
-      - name: Install Python dependencies
+      - name: Install lint group 
+        # Nore there is some subtlety here in using the --only-group approach.
+        # We **do not** install the local package, which means we don't need
+        # any system dependencies, but it can lead to oddities.
         run: uv sync --locked --only-group lint 
 
       - name: Run prek
