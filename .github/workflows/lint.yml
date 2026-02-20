@@ -5,7 +5,7 @@ name: Lint workflow for tskit-dev
 
 on:
   workflow_call:
-
+    
 jobs:
   prek:
     name: Lint
@@ -17,6 +17,8 @@ jobs:
           access_token: ${{ github.token }}
 
       - uses: actions/checkout@v4.2.2
+        with:  
+          submodules: true
 
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
