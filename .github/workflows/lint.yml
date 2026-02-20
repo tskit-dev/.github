@@ -25,9 +25,9 @@ jobs:
           version: "0.10.2"
 
       - name: Install Python dependencies
-        run: uv sync --locked --group lint --no-default-groups
+        run: uv sync --locked --group-only lint 
 
       - name: Run prek
         run: |
-          uv run --locked --no-default-groups --group lint \
+          uv run --locked --group-only lint \
           prek -c prek.toml run --all-files --show-diff-on-failure -vvv
