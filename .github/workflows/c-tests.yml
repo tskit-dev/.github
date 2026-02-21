@@ -37,7 +37,7 @@ jobs:
 
       - name: Configure code
         working-directory: ${{ inputs.library-directory }}
-        run: meson setup build-cov -Db_coverage=true
+        run: CC=gcc meson setup build-cov -Db_coverage=true
 
       - name: Compile
         working-directory: ${{ inputs.library-directory }}
