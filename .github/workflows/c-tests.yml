@@ -49,46 +49,40 @@ jobs:
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --only-group cdev
 
       - name: Configure code
-        working-directory: ${{ inputs.library-directory }}
+        
         run: |
           CC=gcc uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
-          meson setup build-cov -Db_coverage=true
+            meson setup -Db_coverage=true build-cov ${{ inputs.library-directory }}
 
       - name: Compile
-        working-directory: ${{ inputs.library-directory }}
         run: ninja -C build-cov
-
+      
       - name: Run tests
-        working-directory: ${{ inputs.library-directory }}
         run: ninja -C build-cov test
 
       - name: Build coverage report
-        working-directory: ${{ inputs.library-directory }}
         run: |
           GCOVR='uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev gcovr'\
-          ninja -C build-cov coverage-xml
+            ninja -C build-cov coverage-xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: C
-          directory: ${{ inputs.library-directory }}
           gcov_args: --preserve-paths
           fail_ci_if_error: true
          
       - name: Compile and test with clang
-        working-directory: ${{ inputs.library-directory }}
         run: |
           CC=clang uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
-          meson setup build-clang
-          ninja -C build-clang test
+            meson setup build-clang ${{ inputs.library-directory }}
+          ninja -C build-clang test 
 
       - name: Run tests with valgrind
-        working-directory: ${{ inputs.library-directory }}
         run: |
           uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
-            meson setup build-valgrind
+            meson setup build-valgrind ${{ inputs.library-directory }}
           uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
             meson test -C build-valgrind -t-1 \
             --wrapper='valgrind --leak-check=full --error-exitcode=1'
