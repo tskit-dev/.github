@@ -47,7 +47,7 @@ jobs:
 
       - name: Build module
         working-directory: ${{ inputs.pyproject-directory }}
-        run: CFLAGS=--coverage uv run -no-default-groups python setup.py build_ext --inplace
+        run: CFLAGS=--coverage uv run --no-default-groups python setup.py build_ext --inplace
 
       - name: Run low-level tests
         working-directory: ${{ inputs.pyproject-directory }}
