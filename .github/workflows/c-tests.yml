@@ -33,7 +33,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcunit1-dev libconfig-dev \
-            ninja-build valgrind clang meson gcovr ${{ inputs.additional-apt-packages }}
+            ninja-build valgrind clang  ${{ inputs.additional-apt-packages }}
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.2"
+
+      - name: Install uv deps
+        run: uv tool install gcovr meson
 
       - name: Configure code
         working-directory: ${{ inputs.library-directory }}
@@ -49,7 +57,7 @@ jobs:
 
       - name: Build coverage report
         working-directory: ${{ inputs.library-directory }}
-        run: GCOV=gcov ninja -C build-cov coverage-xml
+        run: ninja -C build-cov coverage-xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
