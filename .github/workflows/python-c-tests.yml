@@ -46,12 +46,12 @@ jobs:
         run: uv sync  --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups
 
       - name: Build module
-        run: |
-          CFLAGS=--coverage uv run --project=${{ inputs.pyproject-directory }} --no-default-groups \
-          python setup.py build_ext --inplace
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: CFLAGS=--coverage uv run -no-default-groups python setup.py build_ext --inplace
 
       - name: Run low-level tests
-        run: uv run --project=${{ inputs.pyproject-directory }} --no-default-groups pytest tests/test_python_c.py
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: uv run --no-default-groups pytest tests/test_python_c.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
