@@ -3,6 +3,11 @@ name: Reusable C unit tests
 on:
   workflow_call:
     inputs:
+       pyproject-directory:
+        description: 'Directory to find pyproject.toml'
+        required: false
+        type: string
+        default: '.'
       additional-apt-packages:
         description: 'Additional APT packages to install'
         required: false
@@ -29,7 +34,7 @@ jobs:
         with:
           submodules: true
 
-      - name: Install dev tools
+      - name: Install system deps 
         run: |
           sudo apt-get update
           sudo apt-get install -y libcunit1-dev libconfig-dev \
@@ -41,11 +46,13 @@ jobs:
           version: "0.10.2"
 
       - name: Install uv deps
-        run: uv tool install gcovr; uv tool install meson
+        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --only-group cdev
 
       - name: Configure code
         working-directory: ${{ inputs.library-directory }}
-        run: CC=gcc meson setup build-cov -Db_coverage=true
+        run: |
+          CC=gcc uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
+          meson setup build-cov -Db_coverage=true
 
       - name: Compile
         working-directory: ${{ inputs.library-directory }}
@@ -57,7 +64,9 @@ jobs:
 
       - name: Build coverage report
         working-directory: ${{ inputs.library-directory }}
-        run: ninja -C build-cov coverage-xml
+        run: |
+          GCOVR='uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev gcovr'\
+          ninja -C build-cov coverage-xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
@@ -71,12 +80,15 @@ jobs:
       - name: Compile and test with clang
         working-directory: ${{ inputs.library-directory }}
         run: |
-          CC=clang meson setup build-clang
-          meson test -C build-clang
+          CC=clang uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
+          meson setup build-clang
+          ninja -C build-clang test
 
       - name: Run tests with valgrind
         working-directory: ${{ inputs.library-directory }}
         run: |
-          meson setup build-valgrind
-          meson test -C build-valgrind -t-1 \
-          --wrapper='valgrind --leak-check=full --error-exitcode=1'
+          uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
+            meson setup build-valgrind
+          uv run --locked --project=${{ inputs.pyproject-directory }} --only-group cdev \
+            meson test -C build-valgrind -t-1 \
+            --wrapper='valgrind --leak-check=full --error-exitcode=1'
