@@ -33,7 +33,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcunit1-dev libconfig-dev \
-            ninja-build valgrind clang meson gcovr ${{ inputs.additional-apt-packages }}
+            ninja-build valgrind meson gcovr ${{ inputs.additional-apt-packages }}
 
       - name: Configure code
         working-directory: ${{ inputs.library-directory }}
@@ -60,6 +60,9 @@ jobs:
           gcov_args: --preserve-paths
           fail_ci_if_error: true
 
+      - name: Install clang
+        run: sudo apt-get install -y clang
+         
       - name: Compile and test with clang
         working-directory: ${{ inputs.library-directory }}
         run: |
