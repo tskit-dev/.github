@@ -5,6 +5,12 @@ name: Lint workflow for tskit-dev
 
 on:
   workflow_call:
+    inputs:
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
+        required: false
+        type: string
+        default: '.'
     
 jobs:
   prek:
@@ -30,9 +36,9 @@ jobs:
         # Nore there is some subtlety here in using the --only-group approach.
         # We **do not** install the local package, which means we don't need
         # any system dependencies, but it can lead to oddities.
-        run: uv sync --locked --only-group lint 
+        run: uv sync --locked --project=${{ inputs.pyproject-directory }} --only-group lint 
 
       - name: Run prek
         run: |
-          uv run --locked --only-group lint \
-          prek -c prek.toml run --all-files --show-diff-on-failure
+          uv run --locked --project=${{ inputs.pyproject-directory }} --only-group lint \
+          prek -c ${{ inputs.pyproject-directory }}/prek.toml run --all-files --show-diff-on-failure
