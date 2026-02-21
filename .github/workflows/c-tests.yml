@@ -3,7 +3,7 @@ name: Reusable C unit tests
 on:
   workflow_call:
     inputs:
-       pyproject-directory:
+      pyproject-directory:
         description: 'Directory to find pyproject.toml'
         required: false
         type: string
