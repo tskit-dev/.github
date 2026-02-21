@@ -8,9 +8,14 @@ on:
         required: false
         type: string
         default: ''
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
+        required: false
+        type: string
+        default: '.'
 
 jobs:
-  c-tests:
+  python-c-tests:
     name: Python-C unit tests
     runs-on: ubuntu-24.04
 
@@ -38,13 +43,15 @@ jobs:
           version: "0.8.15"
 
       - name: Install Python dependencies
-        run: uv sync --locked --group test --no-default-groups
+        run: uv sync  --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups
 
       - name: Build module
-        run: CFLAGS=--coverage uv run --no-default-groups python setup.py build_ext --inplace
+        run: |
+          CFLAGS=--coverage uv run --project=${{ inputs.pyproject-directory }} --no-default-groups \
+          python setup.py build_ext --inplace
 
       - name: Run low-level tests
-        run: uv run --no-default-groups pytest tests/test_python_c.py
+        run: uv run --project=${{ inputs.pyproject-directory }} --no-default-groups pytest tests/test_python_c.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
