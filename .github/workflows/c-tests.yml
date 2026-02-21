@@ -41,7 +41,7 @@ jobs:
           version: "0.10.2"
 
       - name: Install uv deps
-        run: uv tool install gcovr meson
+        run: uv tool install gcovr; uv tool install meson
 
       - name: Configure code
         working-directory: ${{ inputs.library-directory }}
