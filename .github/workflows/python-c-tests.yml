@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: '.'
+      tests:
+        description: 'Low-level tests to run'
+        required: false
+        type: string
+        default: 'tests/test_python_c.py'
 
 jobs:
   python-c-tests:
@@ -54,7 +59,7 @@ jobs:
       - name: Run low-level tests
         run: |
           uv run --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups \
-            pytest ${{ inputs.pyproject-directory }}/tests/test_python_c.py
+            pytest ${{ inputs.tests }}
 
       - name: Run gcovr
         run: uv tool run gcovr --clover coverage.xml --txt
