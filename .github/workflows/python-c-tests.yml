@@ -56,14 +56,15 @@ jobs:
           uv run --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups \
             pytest ${{ inputs.pyproject-directory }}/tests/test_python_c.py
 
-      - name: Run gcov
-        run: uv tool run gcovr -o coverage.txt
+      - name: Run gcovr
+        run: uv tool run gcovr -o coverage.txt && cat coverage.txt
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.txt
+          disable_search: true
           verbose: true
           flags: c-python
           fail_ci_if_error: true
