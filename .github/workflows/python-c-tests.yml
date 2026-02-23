@@ -49,7 +49,7 @@ jobs:
         run: CFLAGS=--coverage uv run --no-default-groups python setup.py build_ext --inplace
 
       - name: Run low-level tests
-        run: uv run --project=${{ inputs.pyproject-directory }} --no-default-groups \
+        run: uv run --project=${{ inputs.pyproject-directory }} --no-default-groups  --locked --group test \
           pytest ${{ inputs.pyproject-directory }}/tests/test_python_c.py
 
       - name: Upload coverage to Codecov
