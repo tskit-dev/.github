@@ -41,4 +41,4 @@ jobs:
       - name: Run prek
         run: |
           uv run --locked --project=${{ inputs.pyproject-directory }} --only-group lint \
-          prek -c ${{ inputs.pyproject-directory }}/prek.toml run --all-files --show-diff-on-failure
+          prek -c prek.toml run --all-files --show-diff-on-failure
