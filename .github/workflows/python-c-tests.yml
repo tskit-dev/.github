@@ -57,13 +57,13 @@ jobs:
             pytest ${{ inputs.pyproject-directory }}/tests/test_python_c.py
 
       - name: Run gcovr
-        run: uv tool run gcovr -o coverage.txt && cat coverage.txt
+        run: uv tool run gcovr --clover coverage.xml --txt
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.txt
+          files: coverage.xml
           disable_search: true
           verbose: true
           flags: c-python
