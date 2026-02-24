@@ -60,7 +60,8 @@ jobs:
       - name: Run tests
         run: |
           uv run  --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups \
-            pytest --cov-report=xml --cov-branch -n2 --cov=${{ inputs.coverage-directory }}
+            pytest --cov-report=xml --cov-branch -n2 --cov=${{ inputs.coverage-directory }} \
+            ${{ inputs.pyproject-directory }}/tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.5.2
