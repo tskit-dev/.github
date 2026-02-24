@@ -3,16 +3,6 @@ name: Reusable Python Tests
 on:
   workflow_call:
     inputs:
-      additional_commands:
-        description: 'Additional commands to run after installing dependencies'
-        required: false
-        type: string
-        default: ''
-      make_command:
-        description: 'Make/build command to run'
-        required: false
-        type: string
-        default: ''
       python_version:
         description: 'Python version to use'
         required: true
@@ -21,6 +11,18 @@ on:
         description: 'Operating system to run on'
         required: true
         type: string
+
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
+        required: false
+        type: string
+        default: '.'
+
+      additional-apt-packages:
+        description: 'Additional APT packages to install'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   test:
@@ -40,48 +42,28 @@ jobs:
         with:
           submodules: true
 
-      - name: Determine working directory
-        id: workdir
-        run: |
-          if [ -d "python" ]; then
-            echo "dir=python" >> $GITHUB_OUTPUT
-          else
-            echo "dir=." >> $GITHUB_OUTPUT
-          fi
+      - name: Install additional APT packages
+        if: ${{ inputs.additional-apt-packages != '' }}
+        run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
 
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ inputs.python_version }}
           version: "0.8.15"
-      
-      - name: Install dependencies
-        working-directory: ${{ steps.workdir.outputs.dir }}
-        run: |
-          uv venv
-          uv pip install -r pyproject.toml --extra test
 
-      - name: Additional commands
-        if: ${{ inputs.additional_commands != '' }}
-        working-directory: ${{ steps.workdir.outputs.dir }}
-        run: ${{ inputs.additional_commands }}
-
-      - name: Make/build
-        if: ${{ inputs.make_command != '' }}
-        working-directory: ${{ steps.workdir.outputs.dir }}
-        run: ${{ inputs.make_command }}
+      - name: Install test deps
+        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group tests
 
       - name: Run tests
-        working-directory: ${{ steps.workdir.outputs.dir }}
-        run: |
-          uv run --no-sync python -m pytest -xv --cov --cov-report=xml --cov-branch
+        run: uv run --project=${{ inputs.pyproject-directory }} --cov-report=xml --cov-branch -n2
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5.4.0
+        uses: codecov/codecov-action@v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          working-directory: ${{ steps.workdir.outputs.dir }}
           fail_ci_if_error: false
           flags: python-tests
-          name: codecov-umbrella
+          files: coverage.xml
+          disable_search: true
           verbose: true
