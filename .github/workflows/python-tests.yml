@@ -16,6 +16,10 @@ on:
         required: false
         type: string
         default: '.'
+      coverage-directory:
+        description: 'Directory to calculate coverage for'
+        required: true
+        type: string
       additional-apt-packages:
         description: 'Additional APT packages to install'
         required: false
@@ -56,7 +60,7 @@ jobs:
       - name: Run tests
         run: |
           uv run  --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups \
-            pytest --cov-report=xml --cov-branch -n2
+            pytest --cov-report=xml --cov-branch -n2 --cov=${{ inputs.coverage-directory }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.5.2
