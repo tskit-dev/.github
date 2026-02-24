@@ -20,11 +20,6 @@ on:
         description: 'Directory to calculate coverage for'
         required: true
         type: string
-      additional-apt-packages:
-        description: 'Additional APT packages to install'
-        required: false
-        type: string
-        default: ''
 
 jobs:
   test:
