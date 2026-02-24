@@ -3,7 +3,7 @@ name: Reusable Python Tests
 on:
   workflow_call:
     inputs:
-      python_version:
+      python-version:
         description: 'Python version to use'
         required: true
         type: string
@@ -49,7 +49,7 @@ jobs:
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ inputs.python_version }}
+          python-version: ${{ inputs.python-version }}
           version: "0.8.15"
 
       - name: Install test deps
