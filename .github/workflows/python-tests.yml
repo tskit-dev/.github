@@ -28,7 +28,7 @@ on:
 
 jobs:
   test:
-    name: Python
+    name: Unit tests
     runs-on: ${{ inputs.os }}
     defaults:
       run:
