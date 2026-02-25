@@ -60,7 +60,7 @@ jobs:
         run: uv run --locked --group packaging --no-default-groups twine check --strict dist/*
 
       - name: Install into venv
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.pyproject-directory }}
         run: |
           uv venv cli-test
           uv pip install --python=cli-test dist/*.whl
