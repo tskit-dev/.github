@@ -8,8 +8,8 @@ on:
         required: false
         type: string
         default: ''
-      working-directory:
-        description: 'Working directory to use (default if unspecified)'
+      pyproject-directory:
+        description: 'Directory to find pyproject.toml'
         required: false
         type: string
         default: '.'
@@ -36,29 +36,37 @@ jobs:
         if: ${{ inputs.additional-apt-packages != '' }}
         run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
 
-      - uses: actions/setup-python@v5.4.0
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
+          version: "0.8.15"
 
-      - name: Install build deps
-        run: |
-          pip install uv
-          uv pip install --system build twine validate-pyproject[all]
+      - name: Install packaging deps
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: uv sync --locked --group packaging --no-default-groups
 
       - name: Validate pyproject
-        working-directory: ${{ inputs.working-directory }}
-        run: validate-pyproject pyproject.toml
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: uv run --locked --group packaging --no-default-groups validate-pyproject pyproject.toml -v
+
+      - name: Build artefacts
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: uv build
 
       - name: Twine check
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: uv run --locked --group packaging --no-default-groups twine check --strict dist/*
+
+      - name: Install into venv
         working-directory: ${{ inputs.working-directory }}
         run: |
-          python -m build
-          python -m twine check --strict dist/*
-
-      - name: Install
-        working-directory: ${{ inputs.working-directory }}
-        run: python -m pip install dist/*.whl
+          uv venv cli-test
+          uv pip install --python=cli-test dist/*.whl
 
       - name: Run CLI (if present)
         if: ${{ inputs.cli-test-cmd != '' }}
-        run: ${{ inputs.cli-test-cmd }}
+        working-directory: ${{ inputs.pyproject-directory }}
+        run: |
+          source cli-test/bin/activate
+          ./cli-test/bin/${{ inputs.cli-test-cmd }}
