@@ -27,14 +27,13 @@ jobs:
           version: "0.8.15"
 
       - name: Build artifacts
-        working-directory: ${{ inputs.pyproject-directory }}
-        run: uv build
+        run: uv build --project ${{ inputs.pyproject-directory }} -o dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v6.0.0
         with:
           name: dist
-          path: ${{ inputs.pyproject-directory }}/dist/
+          path: dist/
           if-no-files-found: error
 
   publish:
