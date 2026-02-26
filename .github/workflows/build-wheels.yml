@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: '.'
+      os-list:
+        description: "JSON array of OS runners"
+        required: false
+        type: string
+        default: '["ubuntu-24.04", "windows-2025", "macos-15-intel", "macos-14"]'
 
 jobs:
   build-sdist:
@@ -40,7 +45,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-14]
+        os: ${{ fromJSON(inputs.os-list) }}
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.12.1
