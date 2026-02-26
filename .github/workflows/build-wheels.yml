@@ -93,9 +93,7 @@ jobs:
           fi 
           
       - name: Build wheels
-        run: | 
-          uv run --only-group wheels --project=${{ inputs.pyproject-directory }} \
-          cibuildwheel sdist.tar.gz
+        run: uv run --only-group wheels --project=${{ inputs.pyproject-directory }} cibuildwheel sdist.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
