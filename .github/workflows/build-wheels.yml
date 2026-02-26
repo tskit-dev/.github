@@ -74,7 +74,7 @@ jobs:
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --no-default-groups --group wheels
 
       - name: Build wheels
-        run: uv run --no-default-groups --project={{ inputs.pyproject-directory }} cibuildwheel sdist.tar.gz
+        run: uv run --no-default-groups --project=${{ inputs.pyproject-directory }} cibuildwheel sdist.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
