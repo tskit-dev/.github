@@ -58,7 +58,12 @@ python-packaging tests don't do.
 
 ### Binary wheel building
 
-This is done using the shared workflowA
+This is done using the shared workflow build-wheels.yml. This is using
+cibuildwheel to do the heavy lifting. All configuration should be done
+on the specific repo side using the pyproject.toml. One wrinkle to
+note is that we specify that only builds native to the CPU architecture
+occur on macOS because of the way that linking to GSL happens with
+msprime.
 
 
 ### C API releases
