@@ -4,6 +4,68 @@ This document describes the standard layout and organisation principles for
 core tskit-dev projects. The GitHub workflows defined in this repo require
 that this layout is followed.
 
+
+## tskit-dev packages
+
+The tskit dev managed packages can be split into two groups: Python only, and Python and C.
+The rules for administration are slightly different for the two. The repos are:
+
+**Python only**
+
+- tszip
+- tstrait
+- tsbrowse
+- pyslim
+
+**Python and C**
+
+- tskit
+- msprime
+- kastore
+- tsinfer
+
+## Releases
+
+### Python packages
+
+Releases are performed using the ``wheels.yml`` workflow in each repo using the
+Trusted Publisher PyPI mechanism. Note that this mechanism requires that the
+actual upload be performed from the source repository and not from a shared
+workflow. There is therefore some duplication across the repos of this logic.
+
+To make a release first test that the process is working by pushing to
+a branch named ``test-publish``:
+
+```
+git fetch upstream
+git checkout upstream/main
+git checkout -b test-publish
+git push upstream test-publish
+```
+
+Then go to the Actions tab on github and watch the progress of the build. If
+it all succeeds a release should be pushed to testPyPI (click on the
+"Publish Distribition to TestPyPI" section to get the URL at the end). If this looks OK, then
+proceed with the release on the GitHub UI.
+
+This action is only run on demand and not on push to main branch because
+the binary wheel building is complex and expensive and there's little point in
+running it over and over again. If it's broken when you get ready to do a
+release, fix it.
+
+For Python-only repos the workflow is very simple and does nothing that the
+python-packaging tests don't do.
+
+### Binary wheel building
+
+This is done using the shared workflowA
+
+
+### C API releases
+
+DOCUMENT
+
+
 ## Dependency management
 
 We use uv exclusively for Python package management. All Python dependencies must
