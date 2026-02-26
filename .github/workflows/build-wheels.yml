@@ -77,7 +77,17 @@ jobs:
 
       - name: Install cibuildwheel
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --only-group wheels
+      
+      - name: macOS Intel: build x86_64 only
+        if: matrix.os == 'macos-15-intel'
+        shell: bash
+        run: echo "CIBW_ARCHS_MACOS=x86_64" >> "$GITHUB_ENV"
 
+      - name: macOS ARM: build arm64 only
+        if: matrix.os == 'macos-14'
+        shell: bash
+        run: echo "CIBW_ARCHS_MACOS=arm64" >> "$GITHUB_ENV"
+        
       - name: Build wheels
         run: uv run --only-group wheels --project=${{ inputs.pyproject-directory }} cibuildwheel sdist.tar.gz
 
