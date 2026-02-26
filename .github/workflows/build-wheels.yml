@@ -71,10 +71,10 @@ jobs:
           version: "0.8.15"
 
       - name: Install cibuildwheel
-        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --no-default-groups --group wheels
+        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --only-group wheels
 
       - name: Build wheels
-        run: uv run --no-default-groups --project=${{ inputs.pyproject-directory }} cibuildwheel sdist.tar.gz
+        run: uv run --only-group wheels --project=${{ inputs.pyproject-directory }} cibuildwheel sdist.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
