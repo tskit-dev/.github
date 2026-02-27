@@ -16,17 +16,18 @@ on:
         type: string
         default: '.'
 
-      doxygen-directory:
-        description: 'Directory to run doxygen from'
-        required: false
-        type: string
-        default: ''
-
       additional-apt-packages:
         description: 'Additional APT packages to install'
         required: false
         type: string
         default: ''
+
+      pre-build-command:
+        description: 'Command to run before building docs'
+        required: false
+        type: string
+        default: ''
+
 
 jobs:
   Docs:
@@ -45,9 +46,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      # We could combine this with the doxygen command below, but in practise
-      # they are used mutually exclusively so there's nothing to be gained
-      # in making one apt install.
       - name: Install additional APT packages
         if: ${{ inputs.additional-apt-packages != '' }}
         run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
@@ -85,15 +83,11 @@ jobs:
           echo "PKG_VERSION=$PKG_VERSION"
           sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
 
-      # Tskit has C code that we document using doxygen. This needs to be done
-      # before the jupyterbook build which incorporates it.
-      - name: Install doxygen (if required)
-        if: ${{ inputs.doxygen-directory != '' }}
-        run: sudo apt-get update && sudo apt-get install -y doxygen
-
-      - name: Run doxygen (if required)
-        if: ${{ inputs.doxygen-directory != '' }}
-        run: cd ${{ inputs.doxygen-directory }} && doxygen
+      # We required doxygen and playwright commands before build on some
+      # repose.
+      - name: Run pre-build command
+        if: ${{ inputs.pre-build-command != '' }}
+        run: ${{ inputs.pre-build-command }}
 
       - name: Build documentation
         run: uv run --no-default-groups --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
