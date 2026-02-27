@@ -184,17 +184,51 @@ into the tskit.dev website. Two versions of the documentation are maintained,
 "latest" and "stable". The latest version is updated from the repo each time
 there is a merge. The stable version is updated on release.
 
-The workflow requires:
+On merge to `main`, the workflow triggers a rebuild of the tskit-site via
+the AdminBot-tskit token.
+
+#### Local building
+
+To build the documentation locally, run `make` from the `docs/` directory:
+
+```
+cd docs && make
+```
+
+This calls `docs/build.sh`, which runs:
+
+```
+uv run --project=.. --group docs jupyter-book build . -vnW --keep-going
+```
+
+(For Python+C repos, `--project=../python` is used instead of `--project=..`.)
+
+If the build fails, `build.sh` automatically prints any saved JupyterBook
+error reports to help diagnose the failure.
+
+For Python+C repos the `Makefile` also runs Doxygen to generate C API XML
+before calling `build.sh`. Doxygen is only re-run when the relevant C headers
+have changed, so repeated `make` invocations are fast.
+
+To clean the build output: `make clean`.
+
+#### CI requirements
+
+The shared `docs.yml@main` workflow requires:
 
 - A `docs` dependency group in `pyproject.toml`
 - A `__PKG_VERSION__` placeholder string in `docs/_config.yml`, which is
-  replaced at build time with the package version derived from the installed package.
+  replaced at build time with the package version derived from the installed
+  package.
 
-For Python+C repos, pass `doxygen-directory: docs/doxygen` to generate C API
-documentation with Doxygen before the JupyterBook build.
+For Python+C repos, Doxygen must be installed and run before the JupyterBook
+build. Pass these inputs to the shared workflow:
 
-On merge to `main`, the workflow triggers a rebuild of the tskit-site via
-the AdminBot-tskit token.
+```yaml
+with:
+  additional-apt-packages: doxygen
+  pre-build-command: cd docs/doxygen && doxygen
+```
 
 
 ### Lint
