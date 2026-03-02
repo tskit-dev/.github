@@ -1,17 +1,18 @@
-# Requires
-# - pyproject.toml with a group called "docs"
-# - docs directory in the project root
-# - A __PKG_VERSION__ string in the JupyterBook _config.yml which
-#   is used to replace the with the package version derived from the
-#   python package defined in the pyproject.toml
+# Reusable workflow for building docs in a tskit-dev package repo.
 #
+# Called from each package's own .github/workflows/docs.yml on push/PR.
+# Checks out the current repo, delegates the build to the build-docs
+# composite action, and triggers a tskit-site rebuild on merge to main.
+#
+# Requirements: see .github/actions/build-docs/action.yml
+
 name: Documentation workflow for tskit-dev
 
 on:
   workflow_call:
     inputs:
       pyproject-directory:
-        description: 'Directory to find pyproject.toml'
+        description: 'Directory containing pyproject.toml (relative to repo root)'
         required: false
         type: string
         default: '.'
@@ -23,14 +24,14 @@ on:
         default: ''
 
       pre-build-command:
-        description: 'Command to run before building docs'
+        description: 'Command to run after installing deps but before the docs build'
         required: false
         type: string
         default: ''
 
-
 jobs:
   Docs:
+    name: Build docs
     runs-on: ubuntu-24.04
     steps:
       - uses: styfle/cancel-workflow-action@0.12.1
@@ -42,55 +43,11 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5.4.0
+      - uses: tskit-dev/.github/.github/actions/build-docs@main
         with:
-          python-version: '3.11'
-
-      - name: Install additional APT packages
-        if: ${{ inputs.additional-apt-packages != '' }}
-        run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: "0.8.15"
-
-      - name: Install doc deps
-        run: uv sync --no-default-groups --project=${{ inputs.pyproject-directory }} --locked --group docs
-
-      # This is complicated. We run an embedded python script using uv which
-      # reads the project name from pyproject.toml, and then uses python's
-      # importlib to determine the version number. This should be robust to
-      # version numbers being set in a number of ways.
-      - name: Set build version
-        shell: bash
-        run: |
-          set -euo pipefail
-          export PROJECT_DIR="${{ inputs.pyproject-directory }}"
-          PKG_VERSION="$(
-          uv run --no-default-groups --project "$PROJECT_DIR" python - <<PY
-          import os
-          import tomllib
-          import pathlib
-          import importlib.metadata as m
-
-          project_dir = pathlib.Path(os.environ['PROJECT_DIR'])
-          data = tomllib.loads((project_dir / 'pyproject.toml').read_text())
-          name = data['project']['name']
-          print(m.version(name))
-          PY
-          )"
-          echo "PKG_VERSION=$PKG_VERSION"
-          sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
-
-      # We required doxygen and playwright commands before build on some
-      # repose.
-      - name: Run pre-build command
-        if: ${{ inputs.pre-build-command != '' }}
-        run: ${{ inputs.pre-build-command }}
-
-      - name: Build documentation
-        run: uv run --no-default-groups --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
+          pyproject-directory: ${{ inputs.pyproject-directory }}
+          additional-apt-packages: ${{ inputs.additional-apt-packages }}
+          pre-build-command: ${{ inputs.pre-build-command }}
 
       - name: Trigger tskit-site rebuild
         if: github.ref == 'refs/heads/main'
