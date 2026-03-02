@@ -70,4 +70,4 @@ runs:
 
     - name: Build documentation
       shell: bash
-      run: cd docs && make
+      run: uv run --no-default-groups --project=${{ inputs.pyproject-directory }} jupyter-book build -nW docs/
