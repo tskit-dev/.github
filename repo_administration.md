@@ -20,12 +20,15 @@ core tskit-dev Python packages.
 - **Minimal dependencies.** Dependencies should be declared in the appropriate
   group and pinned only where necessary (lint tools being the main exception).
 
-There are two categories of package in this ecosystem:
+There are three categories of package in this ecosystem:
 
 - **Python-only:** tszip, tstrait, tsdate, tsbrowse, pyslim
-- **Python+C:** tskit, msprime, kastore, tsinfer
+- **Python+C (external C library):** tskit, kastore — the C library has a public API,
+  is independently versioned, and is consumed by other projects
+- **Python+C (internal C library):** msprime, tsinfer — the C code is bundled as
+  part of the Python package and is not released separately
 
-The rules differ slightly between the two, as described below.
+The rules differ slightly between these categories, as described below.
 
 
 ## Repository layout
@@ -35,14 +38,24 @@ The rules differ slightly between the two, as described below.
 `pyproject.toml` and `uv.lock` live at the root. Tests live in `tests/`.
 `prek.toml` lives at the root.
 
-### Python+C repos
+### Python+C repos (external C library)
 
 The Python package and its `pyproject.toml` live in a `python/` subdirectory.
-The C library lives in `c/`. Tests are in `python/tests/`. `prek.toml` and
-`uv.lock` live at the root.
+The standalone C library lives in `c/`. Tests are in `python/tests/`. `prek.toml`
+and `uv.lock` live at the root.
 
 Documentation (`docs/`) lives at the repository root and includes a `doxygen/`
 subdirectory for generating C API docs.
+
+### Python+C repos (internal C library)
+
+The Python package and its `pyproject.toml` live in a `python/` subdirectory.
+The C extension code lives in `lib/` within the `python/` subdirectory. Tests
+are in `python/tests/`. `prek.toml` and `uv.lock` live at the root.
+
+There is no separate C API documentation or independent C release workflow.
+
+### All Python+C repos
 
 All shared workflows that accept a `pyproject-directory` input should be passed
 `python` for these repos.
@@ -202,6 +215,22 @@ Actions logs after a CI run.
 Flags used: **python-tests**, **c-python** (Python+C only), **C** (Python+C
 only).
 
+### `codecov.yml`
+
+Each repo must include a `codecov.yml` at the repository root. This file
+controls how CodeCov interprets and reports coverage data:
+
+- **Flag definitions.** Each flag (`python-tests`, `c-python`, `C`) is declared
+  with `carryforward: true` so that if a CI run only uploads a subset of flags
+  (e.g. on a docs-only change), CodeCov uses the most recent result for the
+  missing flags rather than treating them as zero.
+- **Status checks.** Thresholds for the PR status check (patch and project
+  coverage) are configured here. Setting `informational: true` on checks that
+  are not yet stable avoids blocking merges while coverage is still being
+  established.
+- **Ignored paths.** Test files and generated code can be excluded from
+  coverage totals so that the reported figure reflects production code only.
+
 
 ## Releases
 
@@ -222,10 +251,10 @@ The `build-wheels.yml` shared workflow uses `cibuildwheel` to build binary
 wheels across Linux, macOS, and Windows. All configuration lives in
 `pyproject.toml` under `[tool.cibuildwheel]`.
 
-### C API releases (Python+C only)
+### C API releases (external C library only)
 
-Repos with a C library use a separate `release.yml` for C API releases. Push a
-tag whose name contains `C_` (e.g. `C_1.1.3`) to trigger the workflow; tags
-without `C_` trigger a Python release instead. The workflow builds a source
-tarball with `meson dist` and creates a draft GitHub release for manual review
-and publishing.
+Repos with an external C library (tskit, kastore) use a separate `release.yml`
+for C API releases. Push a tag whose name contains `C_` (e.g. `C_1.1.3`) to
+trigger the workflow; tags without `C_` trigger a Python release instead. The
+workflow builds a source tarball with `meson dist` and creates a draft GitHub
+release for manual review and publishing.
