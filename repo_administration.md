@@ -22,7 +22,7 @@ core tskit-dev Python packages.
 
 There are three categories of package in this ecosystem:
 
-- **Python-only:** tszip, tstrait, tsdate, tsbrowse, pyslim
+- **Python-only:** tszip, tstrait, tsdate, tsbrowse, pyslim, tscompare, sc2ts
 - **Python+C (external C library):** tskit, kastore — the C library has a public API,
   is independently versioned, and is consumed by other projects
 - **Python+C (internal C library):** msprime, tsinfer — the C code is bundled as
@@ -217,20 +217,8 @@ only).
 
 ### `codecov.yml`
 
-Each repo must include a `codecov.yml` at the repository root. This file
-controls how CodeCov interprets and reports coverage data:
-
-- **Flag definitions.** Each flag (`python-tests`, `c-python`, `C`) is declared
-  with `carryforward: true` so that if a CI run only uploads a subset of flags
-  (e.g. on a docs-only change), CodeCov uses the most recent result for the
-  missing flags rather than treating them as zero.
-- **Status checks.** Thresholds for the PR status check (patch and project
-  coverage) are configured here. Setting `informational: true` on checks that
-  are not yet stable avoids blocking merges while coverage is still being
-  established.
-- **Ignored paths.** Test files and generated code can be excluded from
-  coverage totals so that the reported figure reflects production code only.
-
+Each repo should include a `codecov.yml` at the repository root. This file
+controls how CodeCov interprets and reports coverage data.
 
 ## Releases
 
