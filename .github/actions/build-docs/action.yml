@@ -3,12 +3,11 @@
 # The repository must already be checked out before this action is called.
 # It installs documentation dependencies, substitutes the __PKG_VERSION__
 # placeholder in docs/_config.yml, runs an optional pre-build command, then
-# builds via "cd docs && make".
+# builds the docs using jupyterbook
 #
 # Requirements on the target package:
 # - pyproject.toml with a "docs" dependency group
 # - docs/_config.yml containing a __PKG_VERSION__ placeholder
-# - docs/Makefile with an "all" target that runs the jupyterbook build
 
 name: Build docs
 description: Install deps and build jupyterbook docs for a tskit-dev package.
