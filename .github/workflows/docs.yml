@@ -29,6 +29,11 @@ on:
         type: string
         default: ''
 
+      install-slim:
+        description: 'Whether to install SLiM'
+        required: false
+        default: false
+
 jobs:
   Docs:
     name: Build docs
@@ -48,6 +53,7 @@ jobs:
           pyproject-directory: ${{ inputs.pyproject-directory }}
           additional-apt-packages: ${{ inputs.additional-apt-packages }}
           pre-build-command: ${{ inputs.pre-build-command }}
+          install-slim: ${{ inputs.install-slim }}
 
       - name: Trigger tskit-site rebuild
         if: github.ref == 'refs/heads/main'
