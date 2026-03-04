@@ -91,4 +91,4 @@ runs:
     - name: Build documentation
       shell: bash
       working-directory: docs
-      run: ./build.sh
+      run: make
