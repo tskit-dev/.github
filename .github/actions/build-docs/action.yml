@@ -31,7 +31,7 @@ inputs:
   install-slim:
     description: 'Whether to install SLiM'
     required: false
-    default: false
+    default: 'false'
 
 runs:
   using: composite
@@ -42,17 +42,19 @@ runs:
       run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
 
     - name: Set up micromamba
-      if: {{ inputs.install-slim }}
+      if: ${{ inputs.install-slim == 'true' }}
       uses: mamba-org/setup-micromamba@v2.0.4
 
     - name: Install SLiM
-      if: {{ inputs.install-slim }}
+      if: ${{ inputs.install-slim == 'true' }}
+      shell: bash
       run: |
         micromamba install -n base -y slim
         echo "$MAMBA_ROOT_PREFIX/bin" >> $GITHUB_PATH
 
     - name: Verify SLiM
-      if: {{ inputs.install-slim }}
+      if: ${{ inputs.install-slim == 'true' }}
+      shell: bash
       run: slim -v
 
     - name: Install uv
