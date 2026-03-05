@@ -95,11 +95,18 @@ lint = [
 ]
 ```
 
+Ruff can be updated periodically, with any required new fixes or "ignores"
+included.
+
 ### Lock files
 
 A `uv.lock` file must be maintained and committed to the repository. Run
 `uv lock` after any change to dependencies. For Python+C repos the lock file
 lives alongside `pyproject.toml` in `python/`.
+
+Lock files should be updated periodically (say every 6 months) as part of routine maintenance. 
+This provides the opportunity to detect and fix problems caused by upstream packages in 
+a controlled fashion.
 
 
 ## CI workflows
