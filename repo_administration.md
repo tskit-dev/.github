@@ -104,8 +104,8 @@ A `uv.lock` file must be maintained and committed to the repository. Run
 `uv lock` after any change to dependencies. For Python+C repos the lock file
 lives alongside `pyproject.toml` in `python/`.
 
-Lock files should be updated periodically (say every 6 months) as part of routine maintenance. 
-This provides the opportunity to detect and fix problems caused by upstream packages in 
+Lock files should be updated periodically (say every 6 months) as part of routine maintenance.
+This provides the opportunity to detect and fix problems caused by upstream packages in
 a controlled fashion.
 
 
@@ -261,35 +261,26 @@ The steps below apply to both repos.
 2. Merge the PR.
 3. Tag and push:
    ```bash
+   git fetch upstream
+   git checkout upstream/main
    git tag -a C_MAJOR.MINOR.PATCH -m "C API version C_MAJOR.MINOR.PATCH"
-   git push upstream --tags
+   git push upstream C_MAJOR.MINOR.PATCH
    ```
 4. After a couple of minutes, `release.yml` will create a draft release on the
-   repo's GitHub releases page. Copy the changelog into the release body and publish
-   (click the pencil icon).
+   repo's GitHub releases page.  This workflow builds the release tarball and
+   makes it available in a draft release which you can then update via the
+   web UI in the Releases section. Update the release body with the changelog
+   contents and publish.
 5. After release: open a new section in `c/CHANGELOG.rst` for future development
    and close the GitHub issue milestone.
 
 #### Python release
 
-1. Prepare a PR that:
-   - Sets the correct version in `python/<pkg>/_version.py` (PEP 440 format:
-     `MAJOR.MINOR.PATCH` for a normal release, `MAJOR.MINOR.PATCHbX` for a beta)
-   - Updates `python/CHANGELOG.rst` with the release date and version, and checks
-     for completeness (comparing `git log --follow --oneline -- python` with
-     `git log --follow --oneline -- python/CHANGELOG.rst` may help)
-2. Merge the PR.
-3. **Test on TestPyPI**: push to the `test-publish` branch. `wheels.yml` will build
-   wheels and publish them to TestPyPI. Verify the release looks correct.
-4. Tag and push:
-   ```bash
-   git tag -a MAJOR.MINOR.PATCH -m "Python version MAJOR.MINOR.PATCH"
-   git push upstream --tags
-   ```
-5. `release.yml` will create a draft release on the releases page. Copy the changelog
-   into the release body and publish.
-6. Publishing the release triggers `wheels.yml`, which builds binary wheels and uploads
-   them to production PyPI via Trusted Publisher. Check the Actions tab to confirm.
-7. After release: open a new section in `python/CHANGELOG.rst`, bump
-   `python/<pkg>/_version.py` to `MAJOR.MINOR.PATCH.dev0`, and close the GitHub
-   issue milestone.
+This follows the standard Python release process for binary wheels *except*
+we must manually set the version number. So, follow all the steps for a
+standard Python release except:
+
+- (-1) Set the version number in `python/<packagename>/_version.py`
+- (n + ) Post release, set the version number to the next version ".dev0",
+  i.e., if we've just tagged 1.2.1, we set the development version to
+  1.2.2.dev0.
