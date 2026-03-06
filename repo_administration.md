@@ -54,6 +54,8 @@ The C extension code lives in `lib/` within the `python/` subdirectory. Tests
 are in `python/tests/`. `prek.toml` and `uv.lock` live at the root.
 
 There is no separate C API documentation or independent C release workflow.
+These repos (msprime, tsinfer) use `setuptools_scm` for versioning, so no manual
+version file needs to be maintained.
 
 ### All Python+C repos
 
@@ -229,66 +231,50 @@ controls how CodeCov interprets and reports coverage data.
 
 ## Releases
 
-### Python packages
+Python releases use the `wheels.yml` workflow via the Trusted Publisher PyPI mechanism.
+Because Trusted Publisher requires the upload to originate from the source repository,
+this workflow is not shared — each repo maintains its own copy.
 
-Releases use the `wheels.yml` workflow via the Trusted Publisher PyPI
-mechanism. Because Trusted Publisher requires the upload to originate from the
-source repository, this workflow is not shared — each repo maintains its own
-copy.
+Python+C repos additionally use the shared `build-wheels.yml` workflow, which uses
+`cibuildwheel` to build binary wheels across Linux, macOS, and Windows. All
+configuration lives in `pyproject.toml` under `[tool.cibuildwheel]`.
 
-Test the release process first by pushing to a `test-publish` branch and
-verifying that a test release appears on TestPyPI. Then trigger the actual
-release via the GitHub UI.
+tskit and kastore also have a repo-specific `release-c.yml` workflow solely for C API
+releases (see below). This is separate from the Python release process.
 
-### Binary wheels (Python+C only)
+### Standard Python release process
 
-The `build-wheels.yml` shared workflow uses `cibuildwheel` to build binary
-wheels across Linux, macOS, and Windows. All configuration lives in
-`pyproject.toml` under `[tool.cibuildwheel]`.
+> **tskit and kastore:** follow the [tskit and kastore releases](#tskit-and-kastore-releases)
+> section below instead of this standard process.
 
-### Standard python release process
-
-1. Create a PR updating the CHANGELOG with the correct version number
-   (and updating the version manually for repos that don't use `setuptools_scm`;
-   see specific instructions for kastore/tskit below). Merge this PR.
-2. Create a branch called `test-publish` on upstream (either manually from the
-   command line or by using the GitHub UI). This will trigger the wheels.yml
-   GitHub action that builds the Python release artifacts and publishes them
-   using PyPI Trusted publishing. When we push to `test-publish` which pushes
-   the artifacts to Test PyPI, and when we create a full release it pushes them
-   to PyPI. Once the branch has been created, go to the Actions section on
-   Github and watch for the "Publish Python release" workflow associated with
-   "test-publish". This should succeed. It's important to perform this step
-   for repos that build binary releases (msprime, tskit, tsinfer, kastore) as
-   this wheel-building step **is not tested** between releases. If it fails,
-   this is the time to fix it before the release is actually made.
-3. Once a distribution has been successfully uploaded to TestPyPI you can
-   delete the `test-publish` branch (using the UI) and create a release.
-   This is done by using the "Releases" section on GitHub. Click on "Draft
-   new release". In the "tag" box enter the version number of the new release
-   and click on "create new tag". This will create the new tag when the release
-   is published. Fill in the release body with the CHANGELOG contents
-   (the "latest" version of the docs on tskit.dev will have most of the formatting
-   done already and is a handy place to copy from). Click on "publish release".
-   Check the "Publish Python release" action again to make sure that the release
-   succeeds and verify on PyPI.
-4. Once the release has been published, open a PR with any post-release tasks.
-   Usually this is just opening a new section in the CHANGELOG, but repos that
-   do not use `setuptools_scm` will also require the version number to be updated
-   manually also.
+1. Prepare a PR that updates the CHANGELOG with the correct version number. Merge this PR.
+2. Push to the `test-publish` branch on upstream to trigger `wheels.yml`, which builds
+   release artifacts and publishes them to TestPyPI. Check the "Publish Python release"
+   action succeeds. This step is especially important for repos with binary wheels
+   (msprime, tsinfer, tskit, kastore) as the wheel-building step is **not tested** between releases.
+3. Once the TestPyPI upload succeeds, delete the `test-publish` branch. Go to the
+   "Releases" section on GitHub and click "Draft new release". Enter the version number
+   in the tag box and click "create new tag" (the tag is created when the release is
+   published). Fill in the release body with the CHANGELOG contents (the "latest" docs
+   on tskit.dev have most of the formatting done already). Click "Publish release" and
+   confirm the "Publish Python release" action succeeds on PyPI.
+4. Open a post-release PR that opens a new section in the CHANGELOG.
 
 ### tskit and kastore releases
 
-tskit and kastore each have an independently versioned C library and a Python package.
-The steps below apply to both repos.
+tskit and kastore each have an independently versioned C library and a Python package,
+and do not use `setuptools_scm`. The steps below apply to both repos.
 
 #### C API release
 
+`release-c.yml` handles C API releases only — it is triggered by tags containing `C_`
+and has no effect on the Python package.
+
 1. Prepare a PR that:
    - Updates the version macros in the C header and `c/VERSION.txt`
-   - Updates `c/CHANGELOG.rst` with the release date and version, and checks for
-     completeness (comparing `git log --follow --oneline -- c` with
-     `git log --follow --oneline -- c/CHANGELOG.rst` may help)
+   - Updates `c/CHANGELOG.rst` with the release date and version; check completeness
+     by comparing `git log --follow --oneline -- c` with
+     `git log --follow --oneline -- c/CHANGELOG.rst`
 2. Merge the PR.
 3. Tag and push:
    ```bash
@@ -297,21 +283,17 @@ The steps below apply to both repos.
    git tag -a C_MAJOR.MINOR.PATCH -m "C API version C_MAJOR.MINOR.PATCH"
    git push upstream C_MAJOR.MINOR.PATCH
    ```
-4. After a couple of minutes, `release.yml` will create a draft release on the
-   repo's GitHub releases page.  This workflow builds the release tarball and
-   makes it available in a draft release which you can then update via the
-   web UI in the Releases section. Update the release body with the changelog
-   contents and publish.
-5. After release: open a new section in `c/CHANGELOG.rst` for future development
-   and close the GitHub issue milestone.
+4. After a couple of minutes, `release-c.yml` will build the release tarball and create
+   a draft release on the repo's GitHub releases page. Update the release body with the
+   changelog contents and publish.
+5. Open a post-release PR that opens a new section in `c/CHANGELOG.rst` and closes the
+   GitHub issue milestone.
 
 #### Python release
 
-This follows the standard Python release process for binary wheels *except*
-we must manually set the version number. So, follow all the steps for a
-standard Python release except:
+Follow the standard Python release process above, with two differences:
 
-- (-1) Set the version number in `python/<packagename>/_version.py`
-- (n + ) Post release, set the version number to the next version ".dev0",
-  i.e., if we've just tagged 1.2.1, we set the development version to
-  1.2.2.dev0.
+- In step 1, also set the version in `python/<packagename>/_version.py` (these repos
+  do not use `setuptools_scm`).
+- In step 4, also bump the version in `python/<packagename>/_version.py` to
+  `MAJOR.MINOR.PATCH.dev1`.
