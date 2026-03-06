@@ -24,9 +24,9 @@ core tskit-dev Python packages.
   easy to work across the ecosystem and reducing the maintenance burden of each
   individual repo.
 - **Centralised CI logic.** Shared workflows and composite actions in this repo
-  (`tskit-dev/.github`) avoid duplication. Individual repos call into them via
-  `uses: tskit-dev/.github/.github/workflows/<name>.yml@main` or
-  `uses: tskit-dev/.github/.github/actions/<name>@main`.
+  (`tskit-dev/.github`) avoid duplication. Individual repos call shared workflows via
+  a pinned version tag, e.g. `uses: tskit-dev/.github/.github/workflows/<name>.yml@v14`
+  (see [CI workflows](#ci-workflows) for the versioning policy).
 - **Reproducibility.** All dependencies are managed exclusively with `uv` and
   locked via committed `uv.lock` files. Lint tools are pinned to exact versions
   so results are identical locally and in CI.
@@ -53,18 +53,17 @@ The rules differ slightly between these categories, as described below.
 
 ### Python+C repos (external C library)
 
-The Python package and its `pyproject.toml` live in a `python/` subdirectory.
-The standalone C library lives in `c/`. Tests are in `python/tests/`. `prek.toml`
-and `uv.lock` live at the root.
+The Python package and its `pyproject.toml` and `uv.lock` live in a `python/`
+subdirectory. The standalone C library lives in `c/`.
+`prek.toml` lives at the root.
 
 Documentation (`docs/`) lives at the repository root and includes a `doxygen/`
 subdirectory for generating C API docs.
 
 ### Python+C repos (internal C library)
 
-The Python package and its `pyproject.toml` live in a `python/` subdirectory.
-The C extension code lives in `lib/` within the `python/` subdirectory. Tests
-are in `python/tests/`. `prek.toml` and `uv.lock` live at the root.
+The Python package and its `pyproject.toml` and `uv.lock` live in the
+root, along with `prek.toml`. The C extension code lives in `lib/`.
 
 There is no separate C API documentation or independent C release workflow.
 
@@ -72,7 +71,6 @@ There is no separate C API documentation or independent C release workflow.
 
 All shared workflows that accept a `pyproject-directory` input should be passed
 `python` for these repos.
-
 
 ## Dependency management
 
@@ -124,8 +122,23 @@ a controlled fashion.
 
 ## CI workflows
 
-Each repo calls shared workflows defined in this repository. The available
-workflows are:
+Each repo calls shared workflows defined in this repository. Shared workflows are
+versioned via git tags on this repository (`v5`, `v6`, … `v14`, etc.). Calling repos
+pin to a specific tag, e.g.:
+
+```yaml
+uses: tskit-dev/.github/.github/workflows/python-tests.yml@v14
+```
+
+When a change is made to a shared workflow or composite action in this repo, create a
+new tag (incrementing the version number) to publish the change. While developing
+the changes you can use `@main` instead of the tagged version to pick up the
+latest changes. Calling repos must
+then update their pin to pick it up — this is a deliberate opt-in. To update a repo,
+find all occurrences of the old tag in its `.github/workflows/` files and bump them to
+the new version.
+
+The available workflows are:
 
 | Workflow | Purpose |
 |---|---|
@@ -226,6 +239,23 @@ the `c-python` flag.
 **`c-tests.yml`** runs the C unit tests under gcc (with coverage), clang, and
 valgrind. Coverage is uploaded with the `C` flag.
 
+### Required secrets and environments
+
+Each repo needs the following configured before releases, coverage uploads
+and website rebuild triggers to work:
+
+- **`CODECOV_TOKEN`** GitHub Actions secret — for coverage uploads (see [Test coverage](#test-coverage)).
+- **`ADMINBOT_TOKEN`** GitHub Actions secret — used by the shared `docs.yml` workflow to
+  fire a `repository_dispatch` to tskit-site after a successful docs build on `main`.
+  Without this, merging documentation changes will not trigger a site rebuild.
+- **`release` GitHub Actions environment** — required by `wheels.yml` for the Trusted
+  Publisher OIDC token (`id-token: write`). Create this environment in the repo's
+  Settings → Environments.
+- **Trusted Publisher on PyPI and TestPyPI** — configure a Trusted Publisher entry on
+  both [pypi.org](https://pypi.org) and [test.pypi.org](https://test.pypi.org) pointing
+  to the repo and the `release` environment. Without this, the `wheels.yml` upload steps
+  will fail even if the workflow runs successfully.
+
 
 ## Test coverage
 
@@ -291,6 +321,7 @@ old minimum Python version and update them to the new minimum. In particular:
 Python releases use the `wheels.yml` workflow via the Trusted Publisher PyPI mechanism.
 Because Trusted Publisher requires the upload to originate from the source repository,
 this workflow is not shared — each repo maintains its own copy.
+
 
 Python+C repos additionally use the shared `build-wheels.yml` workflow, which uses
 `cibuildwheel` to build binary wheels across Linux, macOS, and Windows. All
@@ -360,7 +391,7 @@ Follow the standard Python release process above, with two differences:
 - In step 1, also set the version in `python/<packagename>/_version.py` (these repos
   do not use `setuptools_scm`).
 - In step 4, also bump the version in `python/<packagename>/_version.py` to
-  `MAJOR.MINOR.PATCH.dev1`.
+  `MAJOR.MINOR.PATCH.dev0`.
 
 
 ## The tskit.dev website
