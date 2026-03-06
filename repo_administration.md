@@ -246,6 +246,37 @@ The `build-wheels.yml` shared workflow uses `cibuildwheel` to build binary
 wheels across Linux, macOS, and Windows. All configuration lives in
 `pyproject.toml` under `[tool.cibuildwheel]`.
 
+### Standard python release process
+
+1. Create a PR updating the CHANGELOG with the correct version number
+   (and updating the version manually for repos that don't use `setuptools_scm`;
+   see specific instructions for kastore/tskit below). Merge this PR.
+2. Create a branch called `test-publish` on upstream (either manually from the
+   command line or by using the GitHub UI). This will trigger the wheels.yml
+   GitHub action that builds the Python release artifacts and publishes them
+   using PyPI Trusted publishing. When we push to `test-publish` which pushes
+   the artifacts to Test PyPI, and when we create a full release it pushes them
+   to PyPI. Once the branch has been created, go to the Actions section on
+   Github and watch for the "Publish Python release" workflow associated with
+   "test-publish". This should succeed. It's important to perform this step
+   for repos that build binary releases (msprime, tskit, tsinfer, kastore) as
+   this wheel-building step **is not tested** between releases. If it fails,
+   this is the time to fix it before the release is actually made.
+3. Once a distribution has been successfully uploaded to TestPyPI you can
+   delete the `test-publish` branch (using the UI) and create a release.
+   This is done by using the "Releases" section on GitHub. Click on "Draft
+   new release". In the "tag" box enter the version number of the new release
+   and click on "create new tag". This will create the new tag when the release
+   is published. Fill in the release body with the CHANGELOG contents
+   (the "latest" version of the docs on tskit.dev will have most of the formatting
+   done already and is a handy place to copy from). Click on "publish release".
+   Check the "Publish Python release" action again to make sure that the release
+   succeeds and verify on PyPI.
+4. Once the release has been published, open a PR with any post-release tasks.
+   Usually this is just opening a new section in the CHANGELOG, but repos that
+   do not use `setuptools_scm` will also require the version number to be updated
+   manually also.
+
 ### tskit and kastore releases
 
 tskit and kastore each have an independently versioned C library and a Python package.
