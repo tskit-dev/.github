@@ -1,5 +1,17 @@
 # Repo administration
 
+## Contents
+
+- [Overview](#overview)
+- [Repository layout](#repository-layout)
+- [Dependency management](#dependency-management)
+- [CI workflows](#ci-workflows)
+- [Test coverage](#test-coverage)
+- [Releases](#releases)
+  - [Standard Python release process](#standard-python-release-process)
+  - [tskit and kastore releases](#tskit-and-kastore-releases)
+- [The tskit.dev website](#the-tskitdev-website)
+
 ## Overview
 
 This document describes the standard layout, tooling, and CI conventions for
