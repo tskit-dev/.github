@@ -246,10 +246,50 @@ The `build-wheels.yml` shared workflow uses `cibuildwheel` to build binary
 wheels across Linux, macOS, and Windows. All configuration lives in
 `pyproject.toml` under `[tool.cibuildwheel]`.
 
-### C API releases (external C library only)
+### tskit and kastore releases
 
-Repos with an external C library (tskit, kastore) use a separate `release.yml`
-for C API releases. Push a tag whose name contains `C_` (e.g. `C_1.1.3`) to
-trigger the workflow; tags without `C_` trigger a Python release instead. The
-workflow builds a source tarball with `meson dist` and creates a draft GitHub
-release for manual review and publishing.
+tskit and kastore each have an independently versioned C library and a Python package.
+The steps below apply to both repos.
+
+#### C API release
+
+1. Prepare a PR that:
+   - Updates the version macros in the C header and `c/VERSION.txt`
+   - Updates `c/CHANGELOG.rst` with the release date and version, and checks for
+     completeness (comparing `git log --follow --oneline -- c` with
+     `git log --follow --oneline -- c/CHANGELOG.rst` may help)
+2. Merge the PR.
+3. Tag and push:
+   ```bash
+   git tag -a C_MAJOR.MINOR.PATCH -m "C API version C_MAJOR.MINOR.PATCH"
+   git push upstream --tags
+   ```
+4. After a couple of minutes, `release.yml` will create a draft release on the
+   repo's GitHub releases page. Copy the changelog into the release body and publish
+   (click the pencil icon).
+5. After release: open a new section in `c/CHANGELOG.rst` for future development
+   and close the GitHub issue milestone.
+
+#### Python release
+
+1. Prepare a PR that:
+   - Sets the correct version in `python/<pkg>/_version.py` (PEP 440 format:
+     `MAJOR.MINOR.PATCH` for a normal release, `MAJOR.MINOR.PATCHbX` for a beta)
+   - Updates `python/CHANGELOG.rst` with the release date and version, and checks
+     for completeness (comparing `git log --follow --oneline -- python` with
+     `git log --follow --oneline -- python/CHANGELOG.rst` may help)
+2. Merge the PR.
+3. **Test on TestPyPI**: push to the `test-publish` branch. `wheels.yml` will build
+   wheels and publish them to TestPyPI. Verify the release looks correct.
+4. Tag and push:
+   ```bash
+   git tag -a MAJOR.MINOR.PATCH -m "Python version MAJOR.MINOR.PATCH"
+   git push upstream --tags
+   ```
+5. `release.yml` will create a draft release on the releases page. Copy the changelog
+   into the release body and publish.
+6. Publishing the release triggers `wheels.yml`, which builds binary wheels and uploads
+   them to production PyPI via Trusted Publisher. Check the Actions tab to confirm.
+7. After release: open a new section in `python/CHANGELOG.rst`, bump
+   `python/<pkg>/_version.py` to `MAJOR.MINOR.PATCH.dev0`, and close the GitHub
+   issue milestone.
