@@ -215,6 +215,101 @@ the `c-python` flag.
 valgrind. Coverage is uploaded with the `C` flag.
 
 
+## The tskit.dev website
+
+The [tskit-site](https://github.com/tskit-dev/tskit-site) repository is the source for
+the [tskit.dev](https://tskit.dev) website, including the landing page and the hosted
+documentation for all packages in the ecosystem. It is a Jekyll site deployed to GitHub
+Pages via the `gh-pages` branch.
+
+### Site build overview
+
+The `deploy.yml` workflow orchestrates the full build. It runs on:
+
+- Every push to `main` (live deployment)
+- Every pull request (preview artifact only — not deployed)
+- A daily scheduled cron job (keeps the site up to date with any upstream changes)
+- A `repository_dispatch` event (triggered automatically by per-repo doc builds — see below)
+- Manual `workflow_dispatch`
+
+`deploy.yml` calls three sub-workflows in parallel, then assembles and deploys the result:
+
+- **`build-core.yml`** — builds the Jekyll site itself (landing page, software listings,
+  news, etc.) using Ruby/Grunt
+- **`build-docs.yml`** — builds per-package documentation for both `latest` (from `main`)
+  and `stable` (from the most recent release tag) versions
+- **`build-extras.yml`** — imports the tutorials site (from `tskit-dev/tutorials`), rust
+  tutorials (from `tskit-dev/tskit-rust`), and builds the tskit-explore JupyterLite app
+
+The assembled site is deployed to `gh-pages`. Package docs land at
+`/<package>/docs/latest` and `/<package>/docs/stable`; a redirect page at
+`/<package>/docs/index.html` points visitors to the `stable` version by default.
+
+### How per-repo doc builds integrate
+
+Each repo's own `docs.yml` uses the shared `docs.yml` workflow defined in this
+repository. On merge to `main`, after a successful build, the shared workflow fires a
+`repository_dispatch` event to `tskit-site`, which triggers a full site rebuild. This
+means that merging a documentation change to any repo automatically propagates to
+tskit.dev within a few minutes.
+
+The `build-docs.yml` in tskit-site uses the same shared `build-docs` composite action
+(`.github/actions/build-docs`) that the per-repo workflow uses, and passes the same
+inputs (`pyproject-directory`, `additional-apt-packages`, `pre-build-command`). Builds
+are cached by commit SHA, so a package's docs are only rebuilt when its `main` branch
+has a new commit.
+
+### What changing the local docs build means
+
+When making changes that affect how docs are built (e.g. new APT dependencies, a new
+pre-build command, changes to `build.sh` or the `docs` dependency group), be aware that
+the build runs in two places:
+
+1. **The repo's own `docs.yml`** — configured via inputs to the shared `docs.yml`
+   workflow in the repo's `.github/workflows/docs.yml`.
+2. **tskit-site's `build-docs.yml`** — has a matrix entry per package that passes the
+   same inputs. This file must be updated in the `tskit-dev/tskit-site` repo to match.
+
+If these two are out of sync, the per-repo CI will pass but the tskit-site build will
+fail or produce incorrect output. The relevant matrix entry in `build-docs.yml` is
+identified by the package name and specifies `additional-apt-packages`,
+`pre-build-command`, `pyproject-directory`, and a `cache-version` (bump this whenever
+the build environment changes to force a cache miss).
+
+Changes to `build.sh`, `docs/_config.yml`, or the `docs` dependency group are picked up
+automatically on the next run with no changes needed to tskit-site.
+
+### Stable and latest versions
+
+`latest` is built from `main` on every new commit. `stable` is built from the most
+recent release tag, determined by sorting all tags and selecting the newest that does
+not contain `b`, `a`, or `C_` in its name (i.e. no pre-releases or C API tags).
+
+The critical distinction: **stable docs are built from the repo code at the tag, but
+using the current shared build infrastructure** — the pinned `build-docs` action version
+and whatever `additional-apt-packages` and `pre-build-command` are currently in the
+tskit-site matrix entry for that package. The stable build does not use `main`'s
+`build.sh` or `docs/` content; it uses whatever was committed at the tag.
+
+This means:
+
+- **Content and structural changes** (new pages, edited text, updated notebooks) only
+  affect `latest` until a new release is tagged. `stable` continues to serve the old
+  content. This is expected behaviour.
+
+- **Build environment changes** (new APT packages, changed `pre-build-command`) require
+  updating the tskit-site matrix entry, which applies to **both** `latest` and `stable`.
+  If the stable release's code is not compatible with the updated build environment,
+  the stable build will break.
+
+- **Bumping `cache-version`** in the tskit-site matrix entry forces a cache miss for
+  both versions. This is required when the build environment changes, but it also means
+  the stable docs will be fully rebuilt — so the same compatibility concern applies.
+
+When making a change that alters the build environment, verify that the stable version
+still builds correctly, or make a new release first so that `stable` and `latest` point
+to the same code.
+
 ## Test coverage
 
 Coverage is monitored by CodeCov. The `CODECOV_TOKEN` secret must be set in
