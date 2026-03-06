@@ -47,7 +47,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ inputs.python-version }}
-          version: "0.8.15"
+          version: "0.10.0"
 
       - name: Install test deps
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups

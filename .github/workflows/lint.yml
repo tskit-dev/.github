@@ -29,7 +29,7 @@ jobs:
       - name: Install uv and set the python version
         uses: astral-sh/setup-uv@v6
         with:
-          version: "0.10.2"
+          version: "0.10.0"
 
       - name: Install lint group
         # Nore there is some subtlety here in using the --only-group approach.
