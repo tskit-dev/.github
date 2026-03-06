@@ -1,5 +1,17 @@
 # Repo administration
 
+## Contents
+
+- [Overview](#overview)
+- [Repository layout](#repository-layout)
+- [Dependency management](#dependency-management)
+- [CI workflows](#ci-workflows)
+- [Test coverage](#test-coverage)
+- [Releases](#releases)
+  - [Standard Python release process](#standard-python-release-process)
+  - [tskit and kastore releases](#tskit-and-kastore-releases)
+- [The tskit.dev website](#the-tskitdev-website)
+
 ## Overview
 
 This document describes the standard layout, tooling, and CI conventions for
@@ -54,8 +66,6 @@ The C extension code lives in `lib/` within the `python/` subdirectory. Tests
 are in `python/tests/`. `prek.toml` and `uv.lock` live at the root.
 
 There is no separate C API documentation or independent C release workflow.
-These repos (msprime, tsinfer) use `setuptools_scm` for versioning, so no manual
-version file needs to be maintained.
 
 ### All Python+C repos
 
@@ -178,8 +188,9 @@ execution, uploading results to CodeCov with the `python-tests` flag. Tests
 should cover a minimum and a recent Python version across Linux, macOS, and
 Windows.
 
-For Python+C repos, required system libraries must be installed in the calling
-workflow before invoking the shared workflow.
+Some repos have their own version of the tests.yml and don't use the shared
+workflow because bespoke actions need to be taken or difficult system libraries
+need to be installed.
 
 
 ### Lint
@@ -213,6 +224,97 @@ the `c-python` flag.
 
 **`c-tests.yml`** runs the C unit tests under gcc (with coverage), clang, and
 valgrind. Coverage is uploaded with the `C` flag.
+
+
+## Test coverage
+
+Coverage is monitored by CodeCov. The `CODECOV_TOKEN` secret must be set in
+each repo's GitHub Actions secrets. Verify uploads are working by checking the
+Actions logs after a CI run.
+
+Flags used: **python-tests**, **c-python** (Python+C only), **C** (Python+C
+only).
+
+### `codecov.yml`
+
+Each repo should include a `codecov.yml` at the repository root. This file
+controls how CodeCov interprets and reports coverage data.
+
+## Releases
+
+Python releases use the `wheels.yml` workflow via the Trusted Publisher PyPI mechanism.
+Because Trusted Publisher requires the upload to originate from the source repository,
+this workflow is not shared — each repo maintains its own copy.
+
+Python+C repos additionally use the shared `build-wheels.yml` workflow, which uses
+`cibuildwheel` to build binary wheels across Linux, macOS, and Windows. All
+configuration lives in `pyproject.toml` under `[tool.cibuildwheel]`.
+
+tskit and kastore also have a repo-specific `release-c.yml` workflow solely for C API
+releases (see below). This is separate from the Python release process.
+
+
+### Version management
+
+Most repos use `setuptools_scm` for versioning, which means that versions are automatically
+created from git tags. This approach doesn't work for kastore and tskit, though, and so they
+maintain version numbers manually.
+
+### Standard Python release process
+
+> **tskit and kastore:** follow the [tskit and kastore releases](#tskit-and-kastore-releases)
+> section below instead of this standard process.
+
+1. Prepare a PR that updates the CHANGELOG with the correct version number. Merge this PR.
+2. Push to the `test-publish` branch on upstream to trigger `wheels.yml`, which builds
+   release artifacts and publishes them to TestPyPI. Check the "Publish Python release"
+   action succeeds. This step is especially important for repos with binary wheels
+   (msprime, tsinfer, tskit, kastore) as the wheel-building step is **not tested** between releases.
+3. Once the TestPyPI upload succeeds, delete the `test-publish` branch. Go to the
+   "Releases" section on GitHub and click "Draft new release". Enter the version number
+   in the tag box and click "create new tag" (the tag is created when the release is
+   published). Fill in the release body with the CHANGELOG contents (the "latest" docs
+   on tskit.dev have most of the formatting done already). Click "Publish release" and
+   confirm the "Publish Python release" action succeeds on PyPI.
+4. Open a post-release PR that opens a new section in the CHANGELOG.
+
+### tskit and kastore releases
+
+tskit and kastore each have an independently versioned C library and a Python package,
+and do not use `setuptools_scm`. The steps below apply to both repos.
+
+#### C API release
+
+`release-c.yml` handles C API releases only — it is triggered by tags containing `C_`
+and has no effect on the Python package.
+
+1. Prepare a PR that:
+   - Updates the version macros in the C header and `c/VERSION.txt`
+   - Updates `c/CHANGELOG.rst` with the release date and version; check completeness
+     by comparing `git log --follow --oneline -- c` with
+     `git log --follow --oneline -- c/CHANGELOG.rst`
+2. Merge the PR.
+3. Tag and push:
+   ```bash
+   git fetch upstream
+   git checkout upstream/main
+   git tag -a C_MAJOR.MINOR.PATCH -m "C API version C_MAJOR.MINOR.PATCH"
+   git push upstream C_MAJOR.MINOR.PATCH
+   ```
+4. After a couple of minutes, `release-c.yml` will build the release tarball and create
+   a draft release on the repo's GitHub releases page. Update the release body with the
+   changelog contents and publish.
+5. Open a post-release PR that opens a new section in `c/CHANGELOG.rst` and closes the
+   GitHub issue milestone.
+
+#### Python release
+
+Follow the standard Python release process above, with two differences:
+
+- In step 1, also set the version in `python/<packagename>/_version.py` (these repos
+  do not use `setuptools_scm`).
+- In step 4, also bump the version in `python/<packagename>/_version.py` to
+  `MAJOR.MINOR.PATCH.dev1`.
 
 
 ## The tskit.dev website
@@ -309,86 +411,3 @@ This means:
 When making a change that alters the build environment, verify that the stable version
 still builds correctly, or make a new release first so that `stable` and `latest` point
 to the same code.
-
-## Test coverage
-
-Coverage is monitored by CodeCov. The `CODECOV_TOKEN` secret must be set in
-each repo's GitHub Actions secrets. Verify uploads are working by checking the
-Actions logs after a CI run.
-
-Flags used: **python-tests**, **c-python** (Python+C only), **C** (Python+C
-only).
-
-### `codecov.yml`
-
-Each repo should include a `codecov.yml` at the repository root. This file
-controls how CodeCov interprets and reports coverage data.
-
-## Releases
-
-Python releases use the `wheels.yml` workflow via the Trusted Publisher PyPI mechanism.
-Because Trusted Publisher requires the upload to originate from the source repository,
-this workflow is not shared — each repo maintains its own copy.
-
-Python+C repos additionally use the shared `build-wheels.yml` workflow, which uses
-`cibuildwheel` to build binary wheels across Linux, macOS, and Windows. All
-configuration lives in `pyproject.toml` under `[tool.cibuildwheel]`.
-
-tskit and kastore also have a repo-specific `release-c.yml` workflow solely for C API
-releases (see below). This is separate from the Python release process.
-
-### Standard Python release process
-
-> **tskit and kastore:** follow the [tskit and kastore releases](#tskit-and-kastore-releases)
-> section below instead of this standard process.
-
-1. Prepare a PR that updates the CHANGELOG with the correct version number. Merge this PR.
-2. Push to the `test-publish` branch on upstream to trigger `wheels.yml`, which builds
-   release artifacts and publishes them to TestPyPI. Check the "Publish Python release"
-   action succeeds. This step is especially important for repos with binary wheels
-   (msprime, tsinfer, tskit, kastore) as the wheel-building step is **not tested** between releases.
-3. Once the TestPyPI upload succeeds, delete the `test-publish` branch. Go to the
-   "Releases" section on GitHub and click "Draft new release". Enter the version number
-   in the tag box and click "create new tag" (the tag is created when the release is
-   published). Fill in the release body with the CHANGELOG contents (the "latest" docs
-   on tskit.dev have most of the formatting done already). Click "Publish release" and
-   confirm the "Publish Python release" action succeeds on PyPI.
-4. Open a post-release PR that opens a new section in the CHANGELOG.
-
-### tskit and kastore releases
-
-tskit and kastore each have an independently versioned C library and a Python package,
-and do not use `setuptools_scm`. The steps below apply to both repos.
-
-#### C API release
-
-`release-c.yml` handles C API releases only — it is triggered by tags containing `C_`
-and has no effect on the Python package.
-
-1. Prepare a PR that:
-   - Updates the version macros in the C header and `c/VERSION.txt`
-   - Updates `c/CHANGELOG.rst` with the release date and version; check completeness
-     by comparing `git log --follow --oneline -- c` with
-     `git log --follow --oneline -- c/CHANGELOG.rst`
-2. Merge the PR.
-3. Tag and push:
-   ```bash
-   git fetch upstream
-   git checkout upstream/main
-   git tag -a C_MAJOR.MINOR.PATCH -m "C API version C_MAJOR.MINOR.PATCH"
-   git push upstream C_MAJOR.MINOR.PATCH
-   ```
-4. After a couple of minutes, `release-c.yml` will build the release tarball and create
-   a draft release on the repo's GitHub releases page. Update the release body with the
-   changelog contents and publish.
-5. Open a post-release PR that opens a new section in `c/CHANGELOG.rst` and closes the
-   GitHub issue milestone.
-
-#### Python release
-
-Follow the standard Python release process above, with two differences:
-
-- In step 1, also set the version in `python/<packagename>/_version.py` (these repos
-  do not use `setuptools_scm`).
-- In step 4, also bump the version in `python/<packagename>/_version.py` to
-  `MAJOR.MINOR.PATCH.dev1`.
