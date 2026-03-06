@@ -7,6 +7,7 @@
 - [Dependency management](#dependency-management)
 - [CI workflows](#ci-workflows)
 - [Test coverage](#test-coverage)
+- [Python version support](#python-version-support)
 - [Releases](#releases)
   - [Standard Python release process](#standard-python-release-process)
   - [tskit and kastore releases](#tskit-and-kastore-releases)
@@ -239,6 +240,51 @@ only).
 
 Each repo should include a `codecov.yml` at the repository root. This file
 controls how CodeCov interprets and reports coverage data.
+
+## Python version support
+
+When adding or removing support for a Python version, update the following in every
+affected repo:
+
+### All repos
+
+**`pyproject.toml`** (or `python/pyproject.toml` for Python+C repos):
+
+- `requires-python` — set the floor version, e.g. `">=3.12"`.
+- `classifiers` — add or remove the corresponding
+  `"Programming Language :: Python :: 3.X"` entry. This is informational (displayed
+  on PyPI) but should be kept in sync with `requires-python` and the test matrix.
+- `[tool.ruff] target-version` — must match the minimum supported version (e.g.
+  `"py312"`). Forgetting this means ruff silently permits syntax that is invalid on
+  the stated floor version.
+
+**`.github/workflows/tests.yml`**:
+
+- Update the `matrix.python` list. Convention is to test the oldest and newest
+  supported versions; intermediate versions do not need individual matrix entries.
+
+### Python+C repos (cibuildwheel)
+
+**`[tool.cibuildwheel]` in `pyproject.toml`**:
+
+- Update the `build` list, e.g. `["cp311-*", "cp312-*", "cp313-*"]`. This is what
+  controls which wheels are built — it is not inferred from the classifiers.
+- When adding a new Python version, check that it is supported by the pinned
+  `cibuildwheel` release in the `wheels` dependency group. Pre-release Python versions
+  may require a newer cibuildwheel or explicit opt-in.
+- After updating, push to the `test-publish` branch and verify that all new wheels
+  build and pass their smoke tests before making a release. Wheel builds are not
+  otherwise exercised in CI between releases, so this step is important.
+
+### Workflow files
+
+Check all `.github/workflows/` files in the repo for any explicit references to the
+old minimum Python version and update them to the new minimum. In particular:
+
+- The `python-version` input passed to `python-c-tests.yml`, `python-packaging.yml`,
+  and `build-wheels.yml` should always match the current minimum supported Python.
+  (`lint.yml` does not need this — it never installs the package.)
+- Any bespoke workflow steps that install or invoke a specific Python version directly.
 
 ## Releases
 
