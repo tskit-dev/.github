@@ -25,7 +25,7 @@ core tskit-dev Python packages.
   individual repo.
 - **Centralised CI logic.** Shared workflows and composite actions in this repo
   (`tskit-dev/.github`) avoid duplication. Individual repos call shared workflows via
-  a pinned version tag, e.g. `uses: tskit-dev/.github/.github/workflows/<name>.yml@v14`
+  a pinned version tag, e.g. `uses: tskit-dev/.github/.github/workflows/<name>.yml@v15`
   (see [CI workflows](#ci-workflows) for the versioning policy).
 - **Reproducibility.** All dependencies are managed exclusively with `uv` and
   locked via committed `uv.lock` files. Lint tools are pinned to exact versions
@@ -127,7 +127,7 @@ versioned via git tags on this repository (`v5`, `v6`, … `v14`, etc.). Calling
 pin to a specific tag, e.g.:
 
 ```yaml
-uses: tskit-dev/.github/.github/workflows/python-tests.yml@v14
+uses: tskit-dev/.github/.github/workflows/python-tests.yml@v15
 ```
 
 When a change is made to a shared workflow or composite action in this repo, create a
@@ -311,9 +311,6 @@ affected repo:
 Check all `.github/workflows/` files in the repo for any explicit references to the
 old minimum Python version and update them to the new minimum. In particular:
 
-- The `python-version` input passed to `python-c-tests.yml`, `python-packaging.yml`,
-  and `build-wheels.yml` should always match the current minimum supported Python.
-  (`lint.yml` does not need this — it never installs the package.)
 - Any bespoke workflow steps that install or invoke a specific Python version directly.
 
 ## Releases
