@@ -23,11 +23,10 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Install uv and set the python version
+      - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.12"
-          version: "0.8.15"
+          version: "0.10.0"
 
       - name: Build sdist
         run: uv build --project=${{ inputs.pyproject-directory }} --sdist -o dist
@@ -69,11 +68,10 @@ jobs:
         shell: bash
         run: cp *.tar.gz sdist.tar.gz
 
-      - name: Install uv and set the python version
+      - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.12"
-          version: "0.8.15"
+          version: "0.10.0"
 
       - name: Install cibuildwheel
         run: uv sync --project=${{ inputs.pyproject-directory }} --locked --only-group wheels

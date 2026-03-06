@@ -40,11 +40,10 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
 
-      - name: Install uv and set the python version
+      - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: 3.11
-          version: "0.8.15"
+          version: "0.10.0"
 
       - name: Install Python dependencies
         run: uv sync  --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups
