@@ -11,6 +11,7 @@
 - [Releases](#releases)
   - [Standard Python release process](#standard-python-release-process)
   - [tskit and kastore releases](#tskit-and-kastore-releases)
+- [conda-forge packages](#conda-forge-packages)
 - [The tskit.dev website](#the-tskitdev-website)
 
 ## Overview
@@ -389,6 +390,29 @@ Follow the standard Python release process above, with two differences:
   do not use `setuptools_scm`).
 - In step 4, also bump the version in `python/<packagename>/_version.py` to
   `MAJOR.MINOR.PATCH.dev0`.
+
+
+## conda-forge packages
+
+Several tskit-dev packages are distributed via conda-forge:
+tskit, msprime, kastore, tstrait, tszip, and tsinfer.
+Each has a feedstock repository at `https://github.com/conda-forge/<package>-feedstock`.
+
+### How conda-forge updates work
+
+conda-forge bots monitor PyPI and automatically open a PR on the feedstock repository
+when a new release is published. This PR updates the version number and source hash in
+`recipe/meta.yaml`. In most cases the PR can simply be merged with no manual
+intervention — the bot handles the version bump and rebuilds.
+
+### What requires manual attention
+
+Dependency changes are **not** picked up automatically. Whenever a package's
+dependencies change (additions, removals, or version constraint changes), the
+corresponding feedstock's `recipe/meta.yaml` must be updated manually:
+
+- `run:` requirements must reflect the current `[project.dependencies]` in
+  `pyproject.toml`.
 
 
 ## The tskit.dev website
