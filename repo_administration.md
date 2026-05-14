@@ -345,12 +345,17 @@ maintain version numbers manually.
    release artifacts and publishes them to TestPyPI. Check the "Publish Python release"
    action succeeds. This step is especially important for repos with binary wheels
    (msprime, tsinfer, tskit, kastore) as the wheel-building step is **not tested** between releases.
+   To find the results of the build action, go to the "Actions" tab in github,
+   and look for the action associated with this branch; next go to
+   `https://test.pypi.org/project/<package>/#history` to see if the upload worked.
 3. Once the TestPyPI upload succeeds, delete the `test-publish` branch. Go to the
-   "Releases" section on GitHub and click "Draft new release". Enter the version number
+   "Releases" section on GitHub and click "Draft new release" (see the names of
+   previous releases for naming convention). Enter the version number
    in the tag box and click "create new tag" (the tag is created when the release is
-   published). Fill in the release body with the CHANGELOG contents (the "latest" docs
-   on tskit.dev have most of the formatting done already). Click "Publish release" and
-   confirm the "Publish Python release" action succeeds on PyPI.
+   published). Fill in the release body with the CHANGELOG contents (you can copy-paste
+   from the CHANGELOG in the "latest" docs on tskit.dev to get the formatting right).
+   Click "Publish release" and confirm the "Publish Python release" action succeeds
+   (under the Actions tab in github) and that it is successfully available on PyPI.
 4. Open a post-release PR that opens a new section in the CHANGELOG.
 
 ### tskit and kastore releases
