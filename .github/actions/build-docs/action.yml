@@ -39,16 +39,19 @@ runs:
     - name: Install additional APT packages
       if: inputs.additional-apt-packages != ''
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
+      env:
+        ADDITIONAL_APT_PACKAGES: ${{ inputs.additional-apt-packages }}
+      run: sudo apt-get update && sudo apt-get install -y ${ADDITIONAL_APT_PACKAGES}
 
     - name: Set up micromamba
       if: ${{ inputs.install-slim == 'true' }}
-      uses: mamba-org/setup-micromamba@v2.0.4
+      uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476  # v3.0.0
 
     - name: Install SLiM
       if: ${{ inputs.install-slim == 'true' }}
       shell: bash
-      run: |
+      # MAMBA_ROOT_PREFIX is a fixed, controlled path set by setup-micromamba, not attacker-controlled.
+      run: | # zizmor: ignore[github-env]
         micromamba install -n base -y slim
         echo "$MAMBA_ROOT_PREFIX/bin" >> $GITHUB_PATH
 
@@ -58,19 +61,23 @@ runs:
       run: slim -v
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
       with:
         version: "0.10.0"
 
     - name: Install doc deps
       shell: bash
-      run: uv sync --no-default-groups --project=${{ inputs.pyproject-directory }} --locked --group docs
+      env:
+        PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+      run: uv sync --no-default-groups --project=${PYPROJECT_DIRECTORY} --locked --group docs
 
     - name: Set build version
       shell: bash
+      env:
+        PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
       run: |
         set -euo pipefail
-        export PROJECT_DIR="${{ inputs.pyproject-directory }}"
+        export PROJECT_DIR="${PYPROJECT_DIRECTORY}"
         PKG_VERSION="$(
         uv run --no-default-groups --project "$PROJECT_DIR" python - <<PY
         import os, tomllib, pathlib, importlib.metadata as m
@@ -86,7 +93,9 @@ runs:
     - name: Pre-build
       if: inputs.pre-build-command != ''
       shell: bash
-      run: ${{ inputs.pre-build-command }}
+      env:
+        PRE_BUILD_COMMAND: ${{ inputs.pre-build-command }}
+      run: ${PRE_BUILD_COMMAND}
 
     - name: Build documentation
       shell: bash

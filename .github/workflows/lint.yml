@@ -12,22 +12,26 @@ on:
         type: string
         default: '.'
 
+permissions:
+  contents: read
+
 jobs:
   prek:
     name: Lint
     runs-on: ubuntu-24.04
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
+        uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66  # 0.13.1
         with:
           access_token: ${{ github.token }}
 
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
           version: "0.10.0"
 
@@ -35,9 +39,13 @@ jobs:
         # Note there is some subtlety here in using the --only-group approach.
         # We **do not** install the local package, which means we don't need
         # any system dependencies, but it can lead to oddities.
-        run: uv sync --locked --project=${{ inputs.pyproject-directory }} --only-group lint
+        env:
+          PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+        run: uv sync --locked --project=${PYPROJECT_DIRECTORY} --only-group lint
 
       - name: Run prek
+        env:
+          PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
         run: |
-          uv run --locked --project=${{ inputs.pyproject-directory }} --only-group lint \
+          uv run --locked --project=${PYPROJECT_DIRECTORY} --only-group lint \
           prek -c prek.toml run --all-files --show-diff-on-failure

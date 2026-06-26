@@ -35,19 +35,23 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 jobs:
   Docs:
     name: Build docs
     runs-on: ubuntu-24.04
     steps:
-      - uses: styfle/cancel-workflow-action@0.12.1
+      - uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66  # 0.13.1
         with:
           access_token: ${{ github.token }}
 
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           submodules: true
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: tskit-dev/.github/.github/actions/build-docs@main
         with:
