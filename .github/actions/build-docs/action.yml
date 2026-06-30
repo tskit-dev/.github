@@ -77,11 +77,10 @@ runs:
         PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
       run: |
         set -euo pipefail
-        export PROJECT_DIR="${PYPROJECT_DIRECTORY}"
         PKG_VERSION="$(
-        uv run --no-default-groups --project "$PROJECT_DIR" python - <<PY
+        uv run --no-default-groups --project "$PYPROJECT_DIRECTORY" python - <<PY
         import os, tomllib, pathlib, importlib.metadata as m
-        project_dir = pathlib.Path(os.environ['PROJECT_DIR'])
+        project_dir = pathlib.Path(os.environ['PYPROJECT_DIRECTORY'])
         data = tomllib.loads((project_dir / 'pyproject.toml').read_text())
         name = data['project']['name']
         print(m.version(name))
