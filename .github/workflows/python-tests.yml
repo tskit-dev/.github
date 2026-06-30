@@ -26,6 +26,9 @@ on:
         type: string
         default: "false"
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Unit tests
@@ -35,14 +38,15 @@ jobs:
         shell: bash
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
+        uses: styfle/cancel-workflow-action@d07a454dad7609a92316b57b23c9ccfd4f59af66  # 0.13.1
         with:
           access_token: ${{ github.token }}
 
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Fix windows symlinks
         if: ${{ inputs.fix-lwt-symlink == 'true' && runner.os == 'Windows' }}
@@ -52,25 +56,32 @@ jobs:
 
       - name: Install additional APT packages
         if: ${{ inputs.additional-apt-packages != '' }}
-        run: sudo apt-get update && sudo apt-get install -y ${{ inputs.additional-apt-packages }}
+        env:
+          ADDITIONAL_APT_PACKAGES: ${{ inputs.additional-apt-packages }}
+        run: sudo apt-get update && sudo apt-get install -y ${ADDITIONAL_APT_PACKAGES}
 
       - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
           python-version: ${{ inputs.python-version }}
           version: "0.10.0"
 
       - name: Install test deps
-        run: uv sync --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups
+        env:
+          PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+        run: uv sync --project=${PYPROJECT_DIRECTORY} --locked --group test --no-default-groups
 
       - name: Run tests
+        env:
+          PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+          COVERAGE_DIRECTORY: ${{ inputs.coverage-directory }}
         run: |
-          uv run  --project=${{ inputs.pyproject-directory }} --locked --group test --no-default-groups \
-            pytest --cov-report=xml --cov-branch -n2 --cov=${{ inputs.coverage-directory }} \
-            ${{ inputs.pyproject-directory }}/tests
+          uv run  --project=${PYPROJECT_DIRECTORY} --locked --group test --no-default-groups \
+            pytest --cov-report=xml --cov-branch -n2 --cov=${COVERAGE_DIRECTORY} \
+            ${PYPROJECT_DIRECTORY}/tests
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7.0.0
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
