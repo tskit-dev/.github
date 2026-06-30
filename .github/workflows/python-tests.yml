@@ -25,6 +25,13 @@ on:
         required: false
         type: string
         default: "false"
+    secrets:
+      CODECOV_TOKEN:
+        # This first-party tskit-dev reusable workflow consumes
+        # secrets.CODECOV_TOKEN; declaring it as a named workflow_call secret
+        # lets callers pass it explicitly instead of `secrets: inherit`.
+        # Required because the codecov step uses fail_ci_if_error: true.
+        required: true
 
 permissions:
   contents: read
