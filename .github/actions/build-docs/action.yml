@@ -23,13 +23,13 @@ inputs:
     required: false
     default: ''
 
-  pre-build-command:
-    description: 'Command to run after installing deps but before the docs build'
-    required: false
-    default: ''
-
   install-slim:
     description: 'Whether to install SLiM'
+    required: false
+    default: 'false'
+
+  install-playwright:
+    description: 'Install Playwright (chromium) for docs that render browser screenshots'
     required: false
     default: 'false'
 
@@ -89,12 +89,12 @@ runs:
         echo "PKG_VERSION=$PKG_VERSION"
         sed -i s/__PKG_VERSION__/${PKG_VERSION}/g docs/_config.yml
 
-    - name: Pre-build
-      if: inputs.pre-build-command != ''
+    - name: Install Playwright
+      if: ${{ inputs.install-playwright == 'true' }}
       shell: bash
       env:
-        PRE_BUILD_COMMAND: ${{ inputs.pre-build-command }}
-      run: ${PRE_BUILD_COMMAND}
+        PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+      run: uv run --no-default-groups --project=${PYPROJECT_DIRECTORY} --locked --group=docs playwright install --with-deps chromium
 
     - name: Build documentation
       shell: bash
