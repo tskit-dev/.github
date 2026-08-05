@@ -314,6 +314,12 @@ old minimum Python version and update them to the new minimum. In particular:
 
 - Any bespoke workflow steps that install or invoke a specific Python version directly.
 
+### Debugging workflows
+
+If there's a problem with a workflow or action file, the CI action will fail to run,
+and the status in a PR will show as "waiting for status". To see what's gone wrong,
+go to the Actions tab in github and find the workflow.
+
 ## Releases
 
 Python releases use the `wheels.yml` workflow via the Trusted Publisher PyPI mechanism.

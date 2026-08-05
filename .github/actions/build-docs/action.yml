@@ -28,6 +28,11 @@ inputs:
     required: false
     default: 'false'
 
+  install-slim-branch:
+    description: 'Name of github branch to install SLiM from (if not specified, use conda)'
+    required: false
+    default: ''
+
   install-playwright:
     description: 'Install Playwright (chromium) for docs that render browser screenshots'
     required: false
@@ -44,21 +49,36 @@ runs:
       run: sudo apt-get update && sudo apt-get install -y ${ADDITIONAL_APT_PACKAGES}
 
     - name: Set up micromamba
-      if: ${{ inputs.install-slim == 'true' }}
+      if: ${{ inputs.install-slim == 'true' && inputs.install-slim-branch == '' }}
       uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476  # v3.0.0
 
     - name: Install SLiM
-      if: ${{ inputs.install-slim == 'true' }}
+      if: ${{ inputs.install-slim == 'true' && inputs.install-slim-branch == '' }}
       shell: bash
       # MAMBA_ROOT_PREFIX is a fixed, controlled path set by setup-micromamba, not attacker-controlled.
       run: | # zizmor: ignore[github-env]
         micromamba install -n base -y slim
         echo "$MAMBA_ROOT_PREFIX/bin" >> $GITHUB_PATH
 
+    - name: Install development SLiM
+      if: ${{ inputs.install-slim == 'true' && inputs.install-slim-branch != '' }}
+      shell: bash
+      env:
+        SLIM_BRANCH: ${{ inputs.install-slim-branch }}
+      run: |
+        git clone https://github.com/messerlab/SLiM.git
+        mkdir -p SLiM/Release
+        cd SLiM/Release
+        git checkout ${SLIM_BRANCH}
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        make -j 2
+
     - name: Verify SLiM
       if: ${{ inputs.install-slim == 'true' }}
       shell: bash
-      run: slim -v
+      run: |
+        export PATH=$PWD/SLiM/Release:$PATH
+        slim -v
 
     - name: Install uv
       uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
@@ -99,4 +119,6 @@ runs:
     - name: Build documentation
       shell: bash
       working-directory: docs
-      run: make
+      run: |
+        export PATH=$PWD/../SLiM/Release:$PATH
+        make
