@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: tskit-dev/.github/.github/actions/build-docs@main
+      - uses: $/.github/actions/build-docs
         with:
           pyproject-directory: ${{ inputs.pyproject-directory }}
           additional-apt-packages: ${{ inputs.additional-apt-packages }}
