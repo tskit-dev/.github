@@ -29,6 +29,12 @@ on:
         type: boolean
         default: false
 
+      install-slim-branch:
+        description: 'Name of github branch to install SLiM from (if not specified, use conda)'
+        required: false
+        type: string
+        default: ''
+
       install-playwright:
         description: 'Install Playwright (chromium) for docs that render browser screenshots'
         required: false
@@ -53,11 +59,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: tskit-dev/.github/.github/actions/build-docs@main
+      - uses: $/.github/actions/build-docs
         with:
           pyproject-directory: ${{ inputs.pyproject-directory }}
           additional-apt-packages: ${{ inputs.additional-apt-packages }}
           install-slim: ${{ inputs.install-slim }}
+          install-slim-branch: ${{ inputs.install-slim-branch }}
           install-playwright: ${{ inputs.install-playwright }}
 
       - name: Trigger tskit-site rebuild

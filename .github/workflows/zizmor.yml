@@ -24,6 +24,6 @@ jobs:
           enable-cache: false
 
       - name: Run zizmor
-        run: uvx zizmor@1.26.1 .github/
+        run: uvx zizmor@1.29.0 .github/
         env:
           GH_TOKEN: ${{ github.token }}
