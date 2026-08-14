@@ -84,6 +84,7 @@ jobs:
       - name: Install cibuildwheel
         env:
           PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+        shell: bash
         run: uv sync --project=${PYPROJECT_DIRECTORY} --locked --only-group wheels
 
       - name: Set CIBW_ARCHS_MACOS based on native arch
@@ -103,6 +104,7 @@ jobs:
       - name: Build wheels
         env:
           PYPROJECT_DIRECTORY: ${{ inputs.pyproject-directory }}
+        shell: bash 
         run: uv run --only-group wheels --project=${PYPROJECT_DIRECTORY} cibuildwheel sdist.tar.gz
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
