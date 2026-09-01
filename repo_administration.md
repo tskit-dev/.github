@@ -363,6 +363,9 @@ maintain version numbers manually.
    Click "Publish release" and confirm the "Publish Python release" action succeeds
    (under the Actions tab in github) and that it is successfully available on PyPI.
 4. Open a post-release PR that opens a new section in the CHANGELOG.
+5. Check that the tskit-site build succeeds: this can be viewed at
+   https://github.com/tskit-dev/tskit-site/actions and happens automatically once per day,
+   although it may be possible to manually trigger a re-build.
 
 ### tskit and kastore releases
 
