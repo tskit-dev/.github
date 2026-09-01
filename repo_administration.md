@@ -520,3 +520,25 @@ This means:
 When making a change that alters the build environment, verify that the stable version
 still builds correctly, or make a new release first so that `stable` and `latest` point
 to the same code.
+
+### Intersphinx mappings
+
+When building docs, cross-documentation references are pulled via intersphinx
+from URLs specified in `docs/_config.html`, for instance:
+```
+        msprime: ["https://tskit.dev/msprime/docs/stable", null]
+```
+So, to see what keys are available for referencing from msprime, you can run
+```
+uv run python -m sphinx.ext.intersphinx https://tskit.dev/msprime/docs/stable
+```
+However, note that this URL points at the tskit site. This means that
+the site needs to build successfully in order for the intersphinx mappings
+to be available. So, if two projects are being updated at the same time,
+it can happen that the site cannot build because one project cannot build because the
+other's intersphinx mapping is not available, but that the intersphinx mapping
+is not available because the site cannot build.
+Possibly the easiest way to get out of this situation is to temporarily modify the
+projects' docs build config so that warnings are not interpreted as errors
+(this may be as simple as removing the `-W` flag from the `jupter-book build`
+command in `docs/build.sh`), reverting this change after the site builds.
